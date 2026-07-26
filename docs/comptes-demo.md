@@ -1,0 +1,53 @@
+# Comptes de démonstration
+
+Créés par `scripts/seed.py` (idempotent — relançable via `make seed`). **Mots de passe
+de développement uniquement** (§15) : à ne jamais utiliser en production, à faire
+tourner avant toute mise en ligne réelle.
+
+Mot de passe commun à tous les comptes : **`DemoDGAP2026!`**
+
+| Compte | Rôle | Interne (MFA) ? | Portée |
+|---|---|---|---|
+| `demo.citoyen@administrationpenitentiaire.sn` | Citoyen | Non | Démarches publiques |
+| `demo.candidat@administrationpenitentiaire.sn` | Candidat concours | Non | Espace candidat (Bloc E) |
+| `demo.agent@administrationpenitentiaire.sn` | Agent pénitentiaire | Oui | Intranet (Bloc F) |
+| `demo.chef-etablissement@administrationpenitentiaire.sn` | Chef d'établissement | Oui | Instruction visites (Bloc D) + intranet |
+| `demo.redacteur@administrationpenitentiaire.sn` | Rédacteur éditorial | Oui | `contenus:rediger` — back-office |
+| `demo.valideur@administrationpenitentiaire.sn` | Valideur éditorial | Oui | `contenus:rediger` + `contenus:valider` — back-office |
+| `demo.administrateur@administrationpenitentiaire.sn` | Administrateur | Oui | `contenus:rediger/valider/publier` + `stats:lire` |
+
+## Comment se connecter
+
+### Comptes publics (citoyen, candidat) — `demarches.localhost`
+
+Pas de MFA : email + mot de passe suffisent.
+
+### Comptes internes (agent, chef-etablissement, redacteur, valideur, administrateur) — `admin.localhost` ou `intranet.localhost`
+
+Le MFA (TOTP) est **obligatoire** mais suit un parcours de *bootstrap* en deux temps :
+
+1. **Première connexion** : email + mot de passe seuls suffisent (aucun code demandé).
+   Le jeton obtenu à ce stade ne donne accès qu'à `/auth/moi` et à l'écran d'activation
+   MFA — aucun endpoint métier n'est accessible tant que l'étape 2 n'est pas faite
+   (`core.permissions.MFAConfirmee`).
+2. **Écran « Activer la double authentification »** (redirection automatique) :
+   - Scanner le QR code avec une application d'authentification (Google
+     Authenticator, Authy, Microsoft Authenticator, ou l'app native « Mots de passe »
+     sur iPhone/iOS 15+ via « Configurer le code de vérification »).
+   - Entrer le code à 6 chiffres affiché, cliquer « Activer ».
+   - ⚠️ Ne pas recharger cette page avant de valider : chaque chargement régénère un
+     nouveau secret tant que rien n'est confirmé.
+3. **Connexions suivantes** : email + mot de passe + code TOTP courant, à chaque fois.
+
+### Réinitialiser le MFA d'un compte de démo (si besoin, en dev uniquement)
+
+```bash
+docker compose exec backend python manage.py shell -c "
+from apps.comptes.models import Utilisateur
+from django_otp.plugins.otp_totp.models import TOTPDevice
+u = Utilisateur.objects.get(email='demo.redacteur@administrationpenitentiaire.sn')
+TOTPDevice.objects.filter(user=u).delete()
+u.mfa_active = False
+u.save(update_fields=['mfa_active'])
+"
+```

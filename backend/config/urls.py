@@ -18,6 +18,7 @@ urlpatterns = [
     path("api/v1/", include("apps.contenus.urls")),
     path("api/v1/", include("apps.demarches.urls")),
     path("api/v1/", include("apps.mediatheque.urls")),
+    path("api/v1/", include("apps.visites.urls")),
     # Documentation API — protégée (§9.2 : Swagger UI protégé, jamais public en clair).
     path(
         "api/v1/schema/",

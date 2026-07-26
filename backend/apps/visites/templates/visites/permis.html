@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<style>
+  @page { size: A5; margin: 18mm 14mm; }
+  body { font-family: "DejaVu Sans", sans-serif; color: #123524; font-size: 11pt; }
+  .bandeau { text-align: center; border-bottom: 2px solid #0B6E4F; padding-bottom: 10px; margin-bottom: 16px; }
+  .bandeau h1 { font-size: 14pt; margin: 0 0 4px; color: #0B6E4F; }
+  .bandeau p { margin: 0; font-size: 9pt; color: #5B6B62; }
+  .titre-permis { text-align: center; font-size: 16pt; font-weight: bold; margin: 16px 0; letter-spacing: 1px; }
+  table.infos { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+  table.infos td { padding: 4px 0; font-size: 10.5pt; vertical-align: top; }
+  table.infos td.libelle { color: #5B6B62; width: 40%; }
+  .qr { text-align: center; margin-top: 18px; }
+  .qr img { width: 130px; height: 130px; }
+  .numero { text-align: center; font-family: monospace; font-size: 11pt; margin-top: 6px; }
+  .pied { margin-top: 22px; font-size: 8.5pt; color: #5B6B62; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="bandeau">
+    <h1>République du Sénégal — Ministère de la Justice</h1>
+    <p>Direction Générale de l'Administration Pénitentiaire</p>
+  </div>
+
+  <div class="titre-permis">PERMIS DE VISITE</div>
+
+  <table class="infos">
+    <tr><td class="libelle">Numéro de permis</td><td>{{ permis.numero_permis }}</td></tr>
+    <tr><td class="libelle">Établissement</td><td>{{ demande.etablissement.nom }}</td></tr>
+    <tr><td class="libelle">Visiteur</td><td>{{ demande.visiteur_prenom }} {{ demande.visiteur_nom }}</td></tr>
+    <tr><td class="libelle">Lien de parenté déclaré</td><td>{{ demande.lien_parente }}</td></tr>
+    <tr><td class="libelle">Date de visite souhaitée</td><td>{{ demande.date_souhaitee|date:"d F Y" }}</td></tr>
+    <tr><td class="libelle">Valide jusqu'au</td><td>{{ permis.valide_jusqu_au|date:"d F Y" }}</td></tr>
+  </table>
+
+  <div class="qr">
+    <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR de vérification du permis" />
+    <p class="numero">{{ permis.numero_permis }}</p>
+  </div>
+
+  <p class="pied">
+    Document à présenter avec une pièce d'identité en cours de validité. Vérification en
+    ligne par numéro sur administrationpenitentiaire.sn, ou hors-ligne par lecture du QR.
+  </p>
+</body>
+</html>

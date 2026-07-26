@@ -1,6 +1,8 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { EnTeteEtat, PiedDePage } from '@dgap/ui'
 import { Accueil } from './pages/Accueil'
+import { VisiteNouvelle } from './pages/VisiteNouvelle'
+import { VisiteSuivi } from './pages/VisiteSuivi'
 
 const liensNav = [
   { libelle: 'Accueil', href: '/' },
@@ -26,6 +28,8 @@ export function App() {
       <main id="contenu-principal" className="flex-1">
         <Routes>
           <Route path="/" element={<Accueil />} />
+          <Route path="/visites/nouvelle" element={<VisiteNouvelle />} />
+          <Route path="/visites/suivi" element={<VisiteSuivi />} />
         </Routes>
       </main>
       <PiedDePage />

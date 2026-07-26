@@ -160,12 +160,12 @@ class ContenuEditorialViewSetMixin(viewsets.GenericViewSet):
 class ArticleBackofficeViewSet(ContenuEditorialViewSetMixin, viewsets.ModelViewSet):
     """CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`."""
 
-    queryset = Article.tous_les_objets.select_related("rubrique").all()  # type: ignore[misc]
+    queryset = Article.tous_les_objets.select_related("rubrique").all()
     serializer_class = ArticleBackofficeSerializer
 
 
 class PageBackofficeViewSet(ContenuEditorialViewSetMixin, viewsets.ModelViewSet):
     """CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`."""
 
-    queryset = Page.tous_les_objets.select_related("rubrique").all()  # type: ignore[misc]
+    queryset = Page.tous_les_objets.select_related("rubrique").all()
     serializer_class = PageBackofficeSerializer

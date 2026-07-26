@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "apps.contenus",
     "apps.demarches",
     "apps.mediatheque",
+    # Bloc D — téléservice Visites (Phase 3)
+    "apps.visites",
     # Apps métier restantes — activées au fil des lots (§4.3). Volontairement absentes
     # tant que leurs modèles ne sont pas livrés : `apps.detenus` ne doit JAMAIS être
     # routée côté public (§6.3) et sera montée dans une configuration réseau cloisonnée.
@@ -171,6 +173,10 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "id",
 }
 
+# Clé de signature des charges QR (permis de visite, convocations — §10). Dédiée et
+# distincte de SECRET_KEY ; à défaut (dev), on retombe sur SECRET_KEY (core.qr_signe).
+QR_SIGNING_KEY = config("QR_SIGNING_KEY", default="")
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "API DGAP",
     "DESCRIPTION": "Direction Générale de l'Administration Pénitentiaire — Sénégal. API REST v1.",
@@ -178,6 +184,15 @@ SPECTACULAR_SETTINGS = {
     "OAS_VERSION": "3.1.0",  # §4.2 — OpenAPI 3.1 imposé par le cahier des charges.
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": r"/api/v1",
+    # Plusieurs modèles ont un champ `statut` avec des choix distincts : sans ceci,
+    # drf-spectacular génère des noms d'enum arbitraires (« StatutB45Enum ») en cas
+    # de collision.
+    "ENUM_NAME_OVERRIDES": {
+        "StatutContenuEnum": "apps.contenus.models.StatutContenu",
+        "StatutContactEnum": "apps.demarches.models.StatutContact",
+        "StatutDocumentEnum": "apps.mediatheque.models.StatutDocument",
+        "StatutDemandeVisiteEnum": "apps.visites.models.StatutDemandeVisite",
+    },
 }
 
 # --- CORS (aucun joker en prod, §9.3) ---------------------------------------------

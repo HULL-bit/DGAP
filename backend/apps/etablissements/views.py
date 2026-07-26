@@ -15,10 +15,9 @@ class EtablissementListView(ListAPIView):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        # django-stubs : accès à un manager générique via la classe, faux positif connu.
-        qs = Etablissement.objets.select_related(  # type: ignore[misc]
-            "type", "direction_regionale", "region"
-        ).filter(actif=True)
+        qs = Etablissement.objets.select_related("type", "direction_regionale", "region").filter(
+            actif=True
+        )
         region = self.request.query_params.get("region")
         if region:
             qs = qs.filter(region__code=region)
@@ -34,8 +33,8 @@ class EtablissementListView(ListAPIView):
 class EtablissementDetailView(RetrieveAPIView):
     """GET /api/v1/etablissements/{id} — fiche établissement, publique."""
 
-    queryset = Etablissement.objets.select_related(  # type: ignore[misc]
-        "type", "direction_regionale", "region"
-    ).filter(actif=True)
+    queryset = Etablissement.objets.select_related("type", "direction_regionale", "region").filter(
+        actif=True
+    )
     serializer_class = EtablissementSerializer
     permission_classes = [AllowAny]

@@ -95,7 +95,9 @@ class ContenuEditorial(ModeleAvecSuppressionLogique):
         max_length=20, choices=StatutContenu.choices, default=StatutContenu.BROUILLON
     )
 
-    objets = RequeteContenuPublieManager()
+    # django-stubs : le manager par défaut de la sous-classe est volontairement plus
+    # spécifique (RequeteContenuPublieManager hérite de RequeteAvecSuppressionLogiqueManager).
+    objets = RequeteContenuPublieManager()  # type: ignore[misc]
 
     class Meta(ModeleAvecSuppressionLogique.Meta):
         abstract = True

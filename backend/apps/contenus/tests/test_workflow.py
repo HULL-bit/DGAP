@@ -19,7 +19,7 @@ def _valideur() -> Utilisateur:
 
 
 def _article(auteur: Utilisateur) -> Article:
-    return Article.tous_les_objets.create(  # type: ignore[misc]
+    return Article.tous_les_objets.create(
         titre="Titre initial",
         slug="titre-initial",
         chapo="Chapo",

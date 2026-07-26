@@ -12,8 +12,7 @@ def generer_numero_ticket() -> str:
     """Format `CTC-AAAA-XXXXXX` — compteur annuel, cf. `DGAP-VIS-AAAA-XXXXXX` (§5)."""
     annee = timezone.now().year
     prefixe = f"CTC-{annee}-"
-    # django-stubs : accès à un manager générique via la classe, faux positif connu.
-    compte = Contact.tous_les_objets.filter(numero_ticket__startswith=prefixe).count() + 1  # type: ignore[misc]
+    compte = Contact.tous_les_objets.filter(numero_ticket__startswith=prefixe).count() + 1
     return f"{prefixe}{compte:06d}"
 
 

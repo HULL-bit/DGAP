@@ -726,6 +726,214 @@ paths:
               schema:
                 $ref: '#/components/schemas/ContactAccuse'
           description: ''
+  /api/v1/demandes-visite:
+    post:
+      operationId: demandes_visite_create
+      description: |-
+        POST /api/v1/demandes-visite — dépôt public, idempotent (§6.1, CR-V-02).
+
+        L'en-tête `Idempotency-Key` évite la création de doublons en cas de double clic
+        ou de perte de connexion juste après l'envoi : une seconde requête avec la même
+        clé renvoie l'accusé déjà émis au lieu de créer une nouvelle demande.
+      tags:
+      - demandes-visite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemandeVisiteCreation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DemandeVisiteCreation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DemandeVisiteCreation'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemandeVisiteAccuse'
+          description: ''
+  /api/v1/demandes-visite/{demande_id}/pieces:
+    post:
+      operationId: demandes_visite_pieces_create
+      description: |-
+        POST /api/v1/demandes-visite/{id}/pieces — téléversement de pièces (§7.3, étape 4).
+
+        Accessible sans authentification tant que la demande n'est pas encore passée en
+        instruction : l'UUID de la demande (non énumérable) fait office de jeton court
+        pour ce dépôt en plusieurs étapes.
+      parameters:
+      - in: path
+        name: demande_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - demandes-visite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PieceJointeVisite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PieceJointeVisite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PieceJointeVisite'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PieceJointeVisite'
+          description: ''
+  /api/v1/demandes-visite/{numero_suivi}/permis/pdf:
+    get:
+      operationId: demandes_visite_permis_pdf_retrieve
+      description: |-
+        GET /api/v1/demandes-visite/{numero_suivi}/permis/pdf?code=... — accès public par le
+        demandeur, sans connaître l'UUID interne (§6.2 : le suivi public n'expose que le
+        numéro et le code, jamais l'identifiant technique).
+      parameters:
+      - in: path
+        name: numero_suivi
+        schema:
+          type: string
+        required: true
+      tags:
+      - demandes-visite
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/demandes-visite/{numero_suivi}/statut:
+    get:
+      operationId: demandes_visite_statut_retrieve
+      description: GET /api/v1/demandes-visite/{numero}/statut?code=... — suivi public
+        restreint.
+      parameters:
+      - in: path
+        name: numero_suivi
+        schema:
+          type: string
+        required: true
+      tags:
+      - demandes-visite
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemandeVisiteStatutPublique'
+          description: ''
+  /api/v1/demandes-visite/instruction:
+    get:
+      operationId: demandes_visite_instruction_list
+      description: GET /api/v1/demandes-visite — file d'instruction (scope `visites:instruire`).
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: La valeur du curseur de pagination.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      tags:
+      - demandes-visite
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDemandeVisiteInstructionList'
+          description: ''
+  /api/v1/demandes-visite/instruction/{id}:
+    get:
+      operationId: demandes_visite_instruction_retrieve
+      description: GET /api/v1/demandes-visite/{id} — détail d'instruction (scope
+        `visites:instruire`).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - demandes-visite
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemandeVisiteInstruction'
+          description: ''
+  /api/v1/demandes-visite/instruction/{id}/transition:
+    post:
+      operationId: demandes_visite_instruction_transition_create
+      description: POST /api/v1/demandes-visite/{id}/transition — instruction (§7.3,
+        §6.3).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - demandes-visite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionVisite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TransitionVisite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TransitionVisite'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemandeVisiteInstruction'
+          description: ''
   /api/v1/documents:
     get:
       operationId: documents_list
@@ -849,6 +1057,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/PageDetail'
           description: ''
+  /api/v1/permis/{demande_id}/pdf:
+    get:
+      operationId: permis_pdf_retrieve
+      description: |-
+        GET /api/v1/permis/{demande_id}/pdf — accessible par le demandeur (numéro+code
+        en requête) ou par un instructeur authentifié.
+      parameters:
+      - in: path
+        name: demande_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - permis
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/permis/verification:
+    post:
+      operationId: permis_verification_create
+      description: |-
+        POST /api/v1/permis/verification — contrôle à l'entrée (scope `visites:controler`,
+        hors-ligne toléré : la signature JWS se vérifie sans requête réseau tierce).
+      tags:
+      - permis
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationPermis'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VerificationPermis'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VerificationPermis'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationPermisReponse'
+          description: ''
   /api/v1/referentiels/directions-regionales:
     get:
       operationId: referentiels_directions_regionales_list
@@ -921,22 +1184,6 @@ paths:
           description: ''
 components:
   schemas:
-    ActionEnum:
-      enum:
-      - soumettre
-      - valider
-      - rejeter
-      - publier
-      - archiver
-      - reactiver
-      type: string
-      description: |-
-        * `soumettre` - soumettre
-        * `valider` - valider
-        * `rejeter` - rejeter
-        * `publier` - publier
-        * `archiver` - archiver
-        * `reactiver` - reactiver
     ArticleBackoffice:
       type: object
       description: CRUD éditorial complet — auteur/dates en lecture seule, reste modifiable.
@@ -959,7 +1206,7 @@ components:
           type: string
         statut:
           allOf:
-          - $ref: '#/components/schemas/StatutB45Enum'
+          - $ref: '#/components/schemas/StatutContenuEnum'
           readOnly: true
         rubrique:
           type:
@@ -1167,6 +1414,189 @@ components:
       - message
       - nom
       - sujet
+    DemandeVisiteAccuse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        numero_suivi:
+          type: string
+          readOnly: true
+        code_suivi:
+          type: string
+          readOnly: true
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutDemandeVisiteEnum'
+          readOnly: true
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code_suivi
+      - cree_le
+      - id
+      - numero_suivi
+      - statut
+    DemandeVisiteCreation:
+      type: object
+      description: POST public — dépôt initial (§7.3, étapes 1 à 3 du formulaire).
+      properties:
+        visiteur_nom:
+          type: string
+          maxLength: 150
+        visiteur_prenom:
+          type: string
+          maxLength: 150
+        visiteur_email:
+          type: string
+          format: email
+          maxLength: 254
+        visiteur_telephone:
+          type: string
+          maxLength: 30
+        lien_parente:
+          type: string
+          maxLength: 100
+        detenu_nom_declare:
+          type: string
+          maxLength: 150
+        detenu_prenom_declare:
+          type: string
+          maxLength: 150
+        etablissement:
+          type: string
+          format: uuid
+        date_souhaitee:
+          type: string
+          format: date
+      required:
+      - date_souhaitee
+      - detenu_nom_declare
+      - detenu_prenom_declare
+      - etablissement
+      - lien_parente
+      - visiteur_email
+      - visiteur_nom
+      - visiteur_prenom
+      - visiteur_telephone
+    DemandeVisiteInstruction:
+      type: object
+      description: Vue complète pour l'instruction back-office (scope `visites:instruire`).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        numero_suivi:
+          type: string
+          readOnly: true
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutDemandeVisiteEnum'
+          readOnly: true
+        visiteur_nom:
+          type: string
+          readOnly: true
+        visiteur_prenom:
+          type: string
+          readOnly: true
+        visiteur_email:
+          type: string
+          format: email
+          readOnly: true
+        visiteur_telephone:
+          type: string
+          readOnly: true
+        lien_parente:
+          type: string
+          readOnly: true
+        detenu_nom_declare:
+          type: string
+          readOnly: true
+        detenu_prenom_declare:
+          type: string
+          readOnly: true
+        etablissement:
+          allOf:
+          - $ref: '#/components/schemas/Etablissement'
+          readOnly: true
+        date_souhaitee:
+          type: string
+          format: date
+          readOnly: true
+        motif_rejet:
+          type: string
+          readOnly: true
+        pieces:
+          type: array
+          items:
+            $ref: '#/components/schemas/PieceJointeVisite'
+          readOnly: true
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        date_instruction:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          readOnly: true
+      required:
+      - cree_le
+      - date_instruction
+      - date_souhaitee
+      - detenu_nom_declare
+      - detenu_prenom_declare
+      - etablissement
+      - id
+      - lien_parente
+      - motif_rejet
+      - numero_suivi
+      - pieces
+      - statut
+      - visiteur_email
+      - visiteur_nom
+      - visiteur_prenom
+      - visiteur_telephone
+    DemandeVisiteStatutPublique:
+      type: object
+      description: Suivi public restreint (numéro + code) — aucune donnée sur la personne
+        détenue.
+      properties:
+        numero_suivi:
+          type: string
+          readOnly: true
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutDemandeVisiteEnum'
+          readOnly: true
+        etablissement:
+          allOf:
+          - $ref: '#/components/schemas/Etablissement'
+          readOnly: true
+        date_souhaitee:
+          type: string
+          format: date
+          readOnly: true
+        motif_rejet:
+          type: string
+          readOnly: true
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - cree_le
+      - date_souhaitee
+      - etablissement
+      - motif_rejet
+      - numero_suivi
+      - statut
     DirectionRegionale:
       type: object
       properties:
@@ -1229,7 +1659,7 @@ components:
           readOnly: true
         statut:
           allOf:
-          - $ref: '#/components/schemas/DocumentPublicStatutEnum'
+          - $ref: '#/components/schemas/StatutDocumentEnum'
           readOnly: true
         categorie:
           type: string
@@ -1249,14 +1679,6 @@ components:
       - numero
       - statut
       - titre
-    DocumentPublicStatutEnum:
-      enum:
-      - EN_VIGUEUR
-      - ABROGE
-      type: string
-      description: |-
-        * `EN_VIGUEUR` - En vigueur
-        * `ABROGE` - Abrogé
     Etablissement:
       type: object
       properties:
@@ -1405,7 +1827,7 @@ components:
           type: string
         statut:
           allOf:
-          - $ref: '#/components/schemas/StatutB45Enum'
+          - $ref: '#/components/schemas/StatutContenuEnum'
           readOnly: true
         rubrique:
           type:
@@ -1506,6 +1928,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ArticleListe'
+    PaginatedDemandeVisiteInstructionList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DemandeVisiteInstruction'
     PaginatedDirectionRegionaleList:
       type: object
       required:
@@ -1654,7 +2095,7 @@ components:
           type: string
         statut:
           allOf:
-          - $ref: '#/components/schemas/StatutB45Enum'
+          - $ref: '#/components/schemas/StatutContenuEnum'
           readOnly: true
         rubrique:
           type:
@@ -1707,7 +2148,7 @@ components:
           type: string
         statut:
           allOf:
-          - $ref: '#/components/schemas/StatutB45Enum'
+          - $ref: '#/components/schemas/StatutContenuEnum'
           readOnly: true
         rubrique:
           type:
@@ -1728,6 +2169,36 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PieceJointeVisite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        type_piece:
+          $ref: '#/components/schemas/TypePieceEnum'
+        fichier:
+          type: string
+          format: uri
+        empreinte_sha256:
+          type: string
+          readOnly: true
+        statut_controle:
+          allOf:
+          - $ref: '#/components/schemas/StatutControleEnum'
+          readOnly: true
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - cree_le
+      - empreinte_sha256
+      - fichier
+      - id
+      - statut_controle
+      - type_piece
     Region:
       type: object
       properties:
@@ -1775,7 +2246,7 @@ components:
       - ordre
       - parent
       - titre
-    StatutB45Enum:
+    StatutContenuEnum:
       enum:
       - BROUILLON
       - RELECTURE
@@ -1789,6 +2260,40 @@ components:
         * `VALIDE` - Validé
         * `PUBLIE` - Publié
         * `ARCHIVE` - Archivé
+    StatutControleEnum:
+      enum:
+      - EN_ATTENTE
+      - LISIBLE
+      - ILLISIBLE
+      type: string
+      description: |-
+        * `EN_ATTENTE` - En attente de contrôle
+        * `LISIBLE` - Lisible
+        * `ILLISIBLE` - Illisible — à representer
+    StatutDemandeVisiteEnum:
+      enum:
+      - SOUMISE
+      - EN_INSTRUCTION
+      - PIECES_MANQUANTES
+      - VALIDEE
+      - REJETEE
+      - PERMIS_DELIVRE
+      type: string
+      description: |-
+        * `SOUMISE` - Soumise
+        * `EN_INSTRUCTION` - En instruction
+        * `PIECES_MANQUANTES` - Pièces manquantes
+        * `VALIDEE` - Validée
+        * `REJETEE` - Rejetée
+        * `PERMIS_DELIVRE` - Permis délivré
+    StatutDocumentEnum:
+      enum:
+      - EN_VIGUEUR
+      - ABROGE
+      type: string
+      description: |-
+        * `EN_VIGUEUR` - En vigueur
+        * `ABROGE` - Abrogé
     TokenRefresh:
       type: object
       properties:
@@ -1804,12 +2309,52 @@ components:
       type: object
       properties:
         action:
-          $ref: '#/components/schemas/ActionEnum'
+          $ref: '#/components/schemas/TransitionActionEnum'
         commentaire:
           type: string
           default: ''
       required:
       - action
+    TransitionActionEnum:
+      enum:
+      - soumettre
+      - valider
+      - rejeter
+      - publier
+      - archiver
+      - reactiver
+      type: string
+      description: |-
+        * `soumettre` - soumettre
+        * `valider` - valider
+        * `rejeter` - rejeter
+        * `publier` - publier
+        * `archiver` - archiver
+        * `reactiver` - reactiver
+    TransitionVisite:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/TransitionVisiteActionEnum'
+        motif:
+          type: string
+          default: ''
+      required:
+      - action
+    TransitionVisiteActionEnum:
+      enum:
+      - instruire
+      - demander_pieces
+      - valider
+      - rejeter
+      - delivrer_permis
+      type: string
+      description: |-
+        * `instruire` - instruire
+        * `demander_pieces` - demander_pieces
+        * `valider` - valider
+        * `rejeter` - rejeter
+        * `delivrer_permis` - delivrer_permis
     TypeEtablissement:
       type: object
       properties:
@@ -1828,6 +2373,16 @@ components:
       - code
       - id
       - libelle
+    TypePieceEnum:
+      enum:
+      - CNI_VISITEUR
+      - PERMIS_COMMUNIQUER
+      - AUTRE
+      type: string
+      description: |-
+        * `CNI_VISITEUR` - Pièce d'identité du visiteur
+        * `PERMIS_COMMUNIQUER` - Permis de communiquer existant
+        * `AUTRE` - Autre document
     Utilisateur:
       type: object
       properties:
@@ -1881,6 +2436,26 @@ components:
       - perimetres
       - prenom
       - scopes
+    VerificationPermis:
+      type: object
+      properties:
+        jeton:
+          type: string
+          description: Contenu brut du QR (JWS compact).
+      required:
+      - jeton
+    VerificationPermisReponse:
+      type: object
+      properties:
+        valide:
+          type: boolean
+        detail:
+          type: string
+        charge:
+          type: object
+          additionalProperties: {}
+      required:
+      - valide
   securitySchemes:
     jwtAuth:
       type: http

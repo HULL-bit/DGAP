@@ -138,7 +138,7 @@ def seed_etablissements(irap: dict[str, DirectionRegionale]) -> None:
     ]
     for irap_code, ville, region_code, lat, lng in donnees:
         nom = f"Maison d'Arrêt et de Correction de {ville}"
-        Etablissement.tous_les_objets.get_or_create(  # type: ignore[misc]
+        Etablissement.tous_les_objets.get_or_create(
             code=f"mac-{region_code}",
             defaults={
                 "nom": nom,
@@ -176,7 +176,7 @@ def seed_contenus() -> None:
         ("visite-dap-cpfi", "Visite du DAP au CPFI", "2026-04-02"),
     ]
     for slug, titre, date_str in articles:
-        Article.tous_les_objets.get_or_create(  # type: ignore[misc]
+        Article.tous_les_objets.get_or_create(
             slug=slug,
             defaults={
                 "titre": titre,
@@ -457,7 +457,7 @@ ROLES_DEMO = [
     (
         "chef-etablissement",
         "Chef d'établissement",
-        ["visites:instruire", "intranet:consulter"],
+        ["visites:instruire", "visites:controler", "intranet:consulter"],
         True,
     ),
     ("redacteur", "Rédacteur éditorial", ["contenus:rediger"], True),

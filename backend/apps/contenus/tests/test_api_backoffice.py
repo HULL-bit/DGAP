@@ -78,15 +78,13 @@ def test_redacteur_peut_creer_un_article_en_brouillon():
 
     assert reponse.status_code == 201
     assert reponse.data["statut"] == "BROUILLON"
-    article = Article.tous_les_objets.get(slug="nouvel-article")  # type: ignore[misc]
+    article = Article.tous_les_objets.get(slug="nouvel-article")
     assert article.versions().count() == 1
 
 
 def test_redacteur_ne_peut_pas_publier_directement():
     redacteur = _utilisateur_avec_scopes("redacteur-api-2@example.sn", "contenus:rediger")
-    article = Article.tous_les_objets.create(  # type: ignore[misc]
-        titre="A", slug="a-publier", contenu="x"
-    )
+    article = Article.tous_les_objets.create(titre="A", slug="a-publier", contenu="x")
     article.transitionner("soumettre")
     article.transitionner("valider")
 
