@@ -64,6 +64,22 @@ async function rafraichirSession(): Promise<boolean> {
   return rafraichissementEnCours
 }
 
+async function traiterReponse<T>(reponse: Response): Promise<T> {
+  if (!reponse.ok) {
+    const probleme = (await reponse.json().catch(() => null)) as ErreurApi | null
+    throw new ApiError(
+      probleme ?? {
+        type: 'about:blank',
+        title: reponse.statusText,
+        status: reponse.status,
+      },
+    )
+  }
+
+  if (reponse.status === 204) return undefined as T
+  return (await reponse.json()) as T
+}
+
 export async function requeteApi<T>(url: string, options: RequestInit = {}, _tentative = 0): Promise<T> {
   const jeton = obtenirJetonAcces()
   const reponse = await fetch(`${baseUrl()}${url}`, {
@@ -81,17 +97,36 @@ export async function requeteApi<T>(url: string, options: RequestInit = {}, _ten
     return requeteApi<T>(url, options, 1)
   }
 
-  if (!reponse.ok) {
-    const probleme = (await reponse.json().catch(() => null)) as ErreurApi | null
-    throw new ApiError(
-      probleme ?? {
-        type: 'about:blank',
-        title: reponse.statusText,
-        status: reponse.status,
-      },
-    )
+  return traiterReponse<T>(reponse)
+}
+
+/**
+ * Variante multipart (téléversement de fichiers) — n'impose pas `Content-Type` afin
+ * que le navigateur pose lui-même la frontière `multipart/form-data`, sinon le
+ * transfert du fichier échoue silencieusement côté serveur.
+ */
+export async function requeteApiFichier<T>(
+  url: string,
+  donnees: FormData,
+  options: RequestInit = {},
+  _tentative = 0,
+): Promise<T> {
+  const jeton = obtenirJetonAcces()
+  const reponse = await fetch(`${baseUrl()}${url}`, {
+    ...options,
+    method: options.method ?? 'POST',
+    credentials: 'include',
+    body: donnees,
+    headers: {
+      'X-Correlation-Id': genererIdCorrelation(),
+      ...(jeton ? { Authorization: `Bearer ${jeton}` } : {}),
+      ...options.headers,
+    },
+  })
+
+  if (reponse.status === 401 && _tentative === 0 && (await rafraichirSession())) {
+    return requeteApiFichier<T>(url, donnees, options, 1)
   }
 
-  if (reponse.status === 204) return undefined as T
-  return (await reponse.json()) as T
+  return traiterReponse<T>(reponse)
 }

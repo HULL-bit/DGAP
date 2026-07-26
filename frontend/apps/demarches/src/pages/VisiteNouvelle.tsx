@@ -1,12 +1,15 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
-import { requeteApi, ApiError } from '@dgap/api-client'
+import { CheckCircle2, ChevronLeft, ChevronRight, Upload } from 'lucide-react'
+import { requeteApi, requeteApiFichier, ApiError } from '@dgap/api-client'
 import { ChampTexte, Bouton, propsApparition } from '@dgap/ui'
 import type { DemandeVisiteAccuse, DemandeVisiteCreation, Etablissement, Pagination } from '../types/api'
+
+const EXTENSIONS_AUTORISEES = ['.jpg', '.jpeg', '.png', '.pdf']
+const TAILLE_MAX_OCTETS = 8 * 1024 * 1024
 
 interface FormulaireVisite {
   visiteur_nom: string
@@ -72,6 +75,11 @@ export function VisiteNouvelle() {
   const [accuse, setAccuse] = useState<DemandeVisiteAccuse | null>(null)
   const cleIdempotence = useMemo(() => crypto.randomUUID(), [])
 
+  const [pieceFichier, setPieceFichier] = useState<File | null>(null)
+  const [erreurPiece, setErreurPiece] = useState<string | null>(null)
+  const [enTeleversement, setEnTeleversement] = useState(false)
+  const [pieceEnvoyee, setPieceEnvoyee] = useState(false)
+
   const { data: etablissements, isLoading: chargementEtablissements } = useQuery({
     queryKey: ['etablissements', 'visite-nouvelle'],
     queryFn: () => requeteApi<Pagination<Etablissement>>('/etablissements?limit=100'),
@@ -132,6 +140,42 @@ export function VisiteNouvelle() {
     }
   }
 
+  function choisirPiece(e: ChangeEvent<HTMLInputElement>) {
+    const fichier = e.target.files?.[0] ?? null
+    setErreurPiece(null)
+    if (fichier) {
+      const nomMinuscule = fichier.name.toLowerCase()
+      if (!EXTENSIONS_AUTORISEES.some((ext) => nomMinuscule.endsWith(ext))) {
+        setErreurPiece('Formats acceptés : JPG, PNG, PDF.')
+        setPieceFichier(null)
+        return
+      }
+      if (fichier.size > TAILLE_MAX_OCTETS) {
+        setErreurPiece('Fichier trop volumineux (8 Mo maximum).')
+        setPieceFichier(null)
+        return
+      }
+    }
+    setPieceFichier(fichier)
+  }
+
+  async function televerserPiece() {
+    if (!accuse || !pieceFichier) return
+    setErreurPiece(null)
+    setEnTeleversement(true)
+    try {
+      const donnees = new FormData()
+      donnees.append('type_piece', 'CNI_VISITEUR')
+      donnees.append('fichier', pieceFichier)
+      await requeteApiFichier(`/demandes-visite/${accuse.id}/pieces`, donnees)
+      setPieceEnvoyee(true)
+    } catch {
+      setErreurPiece("Le fichier n'a pas pu être envoyé. Veuillez réessayer.")
+    } finally {
+      setEnTeleversement(false)
+    }
+  }
+
   return (
     <>
       <Helmet>
@@ -183,6 +227,48 @@ export function VisiteNouvelle() {
                 Conservez ces deux références : elles vous permettront de suivre votre demande et,
                 une fois le permis délivré, de le télécharger.
               </p>
+
+              <div className="mt-5 border-t border-success/20 pt-5">
+                {pieceEnvoyee ? (
+                  <p className="font-corps text-sm text-success">
+                    Pièce d'identité reçue. Elle sera vérifiée lors de l'instruction.
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-corps text-sm font-medium text-text-strong dark:text-text-inv-strong">
+                      Joindre une pièce d'identité (facultatif)
+                    </p>
+                    <p className="mt-1 font-corps text-xs text-text-muted dark:text-text-inv-muted">
+                      Photo ou scan de la carte d'identité du visiteur — JPG, PNG ou PDF, 8 Mo
+                      maximum. Vous pourrez aussi l'ajouter plus tard.
+                    </p>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      onChange={choisirPiece}
+                      aria-label="Pièce d'identité"
+                      className="mt-3 block w-full font-corps text-sm text-text-body file:mr-3 file:rounded-bouton file:border-0 file:bg-primary file:px-3 file:py-2 file:font-titre file:font-semibold file:text-white dark:text-text-inv-body"
+                    />
+                    {erreurPiece && (
+                      <p role="alert" className="mt-2 font-corps text-sm text-error">
+                        {erreurPiece}
+                      </p>
+                    )}
+                    <Bouton
+                      type="button"
+                      taille="sm"
+                      variante="secondaire"
+                      className="mt-3"
+                      disabled={!pieceFichier || enTeleversement}
+                      onClick={televerserPiece}
+                    >
+                      <Upload size={16} aria-hidden="true" />
+                      {enTeleversement ? 'Envoi en cours…' : 'Téléverser'}
+                    </Bouton>
+                  </>
+                )}
+              </div>
+
               <Link
                 to="/visites/suivi"
                 className="mt-4 inline-block font-corps text-sm font-medium text-primary hover:underline dark:text-accent-soft"

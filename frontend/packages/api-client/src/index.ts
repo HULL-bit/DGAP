@@ -1,4 +1,4 @@
-export { requeteApi, ApiError } from './client'
+export { requeteApi, requeteApiFichier, ApiError } from './client'
 export type { ErreurApi } from './client'
 
 export {
