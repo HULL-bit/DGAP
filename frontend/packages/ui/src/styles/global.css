@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Polices auto-hébergées (souveraineté + perf, §3.1). Fichiers réels à déposer sous
+   packages/ui/src/assets/fonts/ lors de l'intégration graphique définitive. */
+@font-face {
+  font-family: 'Marianne';
+  src: url('../assets/fonts/Marianne-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Marianne';
+  src: url('../assets/fonts/Marianne-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('../assets/fonts/Inter-Variable.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-family: theme('fontFamily.corps');
+  color: theme('colors.text.body');
+  background-color: theme('colors.surface.white');
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.dark body {
+  color: theme('colors.text.inv-body');
+  background-color: theme('colors.surface.dark');
+}
+
+/* Respect strict de prefers-reduced-motion : neutralise les transitions non essentielles. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

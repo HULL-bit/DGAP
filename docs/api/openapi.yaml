@@ -1,0 +1,1888 @@
+openapi: 3.1.0
+info:
+  title: API DGAP
+  version: 1.0.0
+  description: Direction Générale de l'Administration Pénitentiaire — Sénégal. API
+    REST v1.
+paths:
+  /api/v1/articles:
+    get:
+      operationId: articles_list
+      description: GET /api/v1/articles?rubrique=&q= — actualités publiées uniquement
+        (§7.2).
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: La valeur du curseur de pagination.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      tags:
+      - articles
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleListeList'
+          description: ''
+  /api/v1/articles/{slug}:
+    get:
+      operationId: articles_retrieve
+      description: GET /api/v1/articles/{slug} — publique, uniquement les articles
+        publiés.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - articles
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+          description: ''
+  /api/v1/auth/connexion:
+    post:
+      operationId: auth_connexion_create
+      description: POST /api/v1/auth/connexion — émet un jeton JWT, exige MFA pour
+        les comptes internes.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Connexion'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Connexion'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Connexion'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connexion'
+          description: ''
+  /api/v1/auth/mfa/confirmation:
+    post:
+      operationId: auth_mfa_confirmation_create
+      description: POST /api/v1/auth/mfa/confirmation — valide le premier code et
+        active le MFA.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmationMFARequete'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConfirmationMFARequete'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConfirmationMFARequete'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmationMFAReponse'
+          description: ''
+  /api/v1/auth/mfa/inscription:
+    post:
+      operationId: auth_mfa_inscription_create
+      description: POST /api/v1/auth/mfa/inscription — crée un dispositif TOTP non
+        confirmé + QR.
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InscriptionMFAReponse'
+          description: ''
+  /api/v1/auth/moi:
+    get:
+      operationId: auth_moi_retrieve
+      description: GET /api/v1/auth/moi — profil, scopes et périmètres de l'utilisateur
+        courant.
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+          description: ''
+  /api/v1/auth/rafraichissement:
+    post:
+      operationId: auth_rafraichissement_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/v1/backoffice/articles:
+    get:
+      operationId: backoffice_articles_list
+      description: CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: La valeur du curseur de pagination.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      tags:
+      - backoffice
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleBackofficeList'
+          description: ''
+    post:
+      operationId: backoffice_articles_create
+      description: CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`.
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleBackoffice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleBackoffice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleBackoffice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleBackoffice'
+          description: ''
+  /api/v1/backoffice/articles/{id}:
+    get:
+      operationId: backoffice_articles_retrieve
+      description: CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) article.
+        required: true
+      tags:
+      - backoffice
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleBackoffice'
+          description: ''
+    put:
+      operationId: backoffice_articles_update
+      description: CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) article.
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleBackoffice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleBackoffice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleBackoffice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleBackoffice'
+          description: ''
+    patch:
+      operationId: backoffice_articles_partial_update
+      description: CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) article.
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleBackoffice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleBackoffice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleBackoffice'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleBackoffice'
+          description: ''
+    delete:
+      operationId: backoffice_articles_destroy
+      description: CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) article.
+        required: true
+      tags:
+      - backoffice
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/backoffice/articles/{id}/transition:
+    post:
+      operationId: backoffice_articles_transition_create
+      description: |-
+        POST .../{id}/transition — {"action": "soumettre|valider|..."}.
+
+        Actions possibles : soumettre, valider, rejeter, publier, archiver, reactiver.
+        Voir `TRANSITIONS_AUTORISEES` (models.py) pour la matrice complète.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) article.
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transition'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Transition'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Transition'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/backoffice/articles/{id}/versions:
+    get:
+      operationId: backoffice_articles_versions_retrieve
+      description: CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) article.
+        required: true
+      tags:
+      - backoffice
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleBackoffice'
+          description: ''
+  /api/v1/backoffice/articles/{id}/versions/{numero}/restaurer:
+    post:
+      operationId: backoffice_articles_versions_restaurer_create
+      description: CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) article.
+        required: true
+      - in: path
+        name: numero
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleBackoffice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleBackoffice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleBackoffice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleBackoffice'
+          description: ''
+  /api/v1/backoffice/pages:
+    get:
+      operationId: backoffice_pages_list
+      description: CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: La valeur du curseur de pagination.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      tags:
+      - backoffice
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPageBackofficeList'
+          description: ''
+    post:
+      operationId: backoffice_pages_create
+      description: CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`.
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PageBackoffice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PageBackoffice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PageBackoffice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageBackoffice'
+          description: ''
+  /api/v1/backoffice/pages/{id}:
+    get:
+      operationId: backoffice_pages_retrieve
+      description: CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) page.
+        required: true
+      tags:
+      - backoffice
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageBackoffice'
+          description: ''
+    put:
+      operationId: backoffice_pages_update
+      description: CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) page.
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PageBackoffice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PageBackoffice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PageBackoffice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageBackoffice'
+          description: ''
+    patch:
+      operationId: backoffice_pages_partial_update
+      description: CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) page.
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPageBackoffice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPageBackoffice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPageBackoffice'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageBackoffice'
+          description: ''
+    delete:
+      operationId: backoffice_pages_destroy
+      description: CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) page.
+        required: true
+      tags:
+      - backoffice
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/backoffice/pages/{id}/transition:
+    post:
+      operationId: backoffice_pages_transition_create
+      description: |-
+        POST .../{id}/transition — {"action": "soumettre|valider|..."}.
+
+        Actions possibles : soumettre, valider, rejeter, publier, archiver, reactiver.
+        Voir `TRANSITIONS_AUTORISEES` (models.py) pour la matrice complète.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) page.
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transition'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Transition'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Transition'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/backoffice/pages/{id}/versions:
+    get:
+      operationId: backoffice_pages_versions_retrieve
+      description: CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) page.
+        required: true
+      tags:
+      - backoffice
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageBackoffice'
+          description: ''
+  /api/v1/backoffice/pages/{id}/versions/{numero}/restaurer:
+    post:
+      operationId: backoffice_pages_versions_restaurer_create
+      description: CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Un(une) Chaîne UUID identifiant ce(cette) page.
+        required: true
+      - in: path
+        name: numero
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - backoffice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PageBackoffice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PageBackoffice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PageBackoffice'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageBackoffice'
+          description: ''
+  /api/v1/contacts:
+    post:
+      operationId: contacts_create
+      description: |-
+        POST /api/v1/contacts — formulaire tracé, accusé automatique avec n° de ticket (§7.2).
+
+        Note d'exploitation : l'envoi de l'accusé par e-mail/SMS est délégué à
+        `apps.notifications` (non encore livrée) — la création du ticket est
+        fonctionnelle dès maintenant, l'envoi effectif suivra au Bloc B/D.
+      tags:
+      - contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactCreation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContactCreation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ContactCreation'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactAccuse'
+          description: ''
+  /api/v1/documents:
+    get:
+      operationId: documents_list
+      description: GET /api/v1/documents?categorie=&q= — publications officielles
+        (§7.2).
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: La valeur du curseur de pagination.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      tags:
+      - documents
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDocumentPublicList'
+          description: ''
+  /api/v1/etablissements:
+    get:
+      operationId: etablissements_list
+      description: GET /api/v1/etablissements?region=&type=&q= — annuaire public (§7.2).
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: La valeur du curseur de pagination.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Nombre de résultats à retourner par page.
+        schema:
+          type: integer
+      tags:
+      - etablissements
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEtablissementList'
+          description: ''
+  /api/v1/etablissements/{id}:
+    get:
+      operationId: etablissements_retrieve
+      description: GET /api/v1/etablissements/{id} — fiche établissement, publique.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - etablissements
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Etablissement'
+          description: ''
+  /api/v1/faq:
+    get:
+      operationId: faq_list
+      description: GET /api/v1/faq?categorie= — questions fréquentes publiées.
+      tags:
+      - faq
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FAQ'
+          description: ''
+  /api/v1/pages/{slug}:
+    get:
+      operationId: pages_retrieve
+      description: GET /api/v1/pages/{slug} — pages institutionnelles publiées (À
+        propos, Historique…).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - pages
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDetail'
+          description: ''
+  /api/v1/referentiels/directions-regionales:
+    get:
+      operationId: referentiels_directions_regionales_list
+      description: GET /api/v1/referentiels/directions-regionales — public.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      tags:
+      - referentiels
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDirectionRegionaleList'
+          description: ''
+  /api/v1/referentiels/regions:
+    get:
+      operationId: referentiels_regions_list
+      description: GET /api/v1/referentiels/regions — public, alimente les filtres
+        de l'annuaire.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      tags:
+      - referentiels
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRegionList'
+          description: ''
+  /api/v1/referentiels/types-etablissement:
+    get:
+      operationId: referentiels_types_etablissement_list
+      description: GET /api/v1/referentiels/types-etablissement — public.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: Un numéro de page de l'ensemble des résultats.
+        schema:
+          type: integer
+      tags:
+      - referentiels
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTypeEtablissementList'
+          description: ''
+components:
+  schemas:
+    ActionEnum:
+      enum:
+      - soumettre
+      - valider
+      - rejeter
+      - publier
+      - archiver
+      - reactiver
+      type: string
+      description: |-
+        * `soumettre` - soumettre
+        * `valider` - valider
+        * `rejeter` - rejeter
+        * `publier` - publier
+        * `archiver` - archiver
+        * `reactiver` - reactiver
+    ArticleBackoffice:
+      type: object
+      description: CRUD éditorial complet — auteur/dates en lecture seule, reste modifiable.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        titre:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          maxLength: 220
+          pattern: ^[-a-zA-Z0-9_]+$
+        chapo:
+          type: string
+          description: Résumé affiché dans les listes.
+        contenu:
+          type: string
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutB45Enum'
+          readOnly: true
+        rubrique:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        date_publication:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          readOnly: true
+        image_url:
+          description: Placeholder — médiathèque MinIO au Bloc B/C.
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        meta_titre:
+          type: string
+          maxLength: 200
+        meta_description:
+          type: string
+          maxLength: 300
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        modifie_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - cree_le
+      - date_publication
+      - id
+      - modifie_le
+      - slug
+      - statut
+      - titre
+    ArticleDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        titre:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        chapo:
+          type: string
+          readOnly: true
+          description: Résumé affiché dans les listes.
+        contenu:
+          type: string
+          readOnly: true
+        rubrique:
+          allOf:
+          - $ref: '#/components/schemas/Rubrique'
+          readOnly: true
+        date_publication:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          description: Placeholder — médiathèque MinIO au Bloc B/C.
+        meta_titre:
+          type: string
+          readOnly: true
+        meta_description:
+          type: string
+          readOnly: true
+      required:
+      - chapo
+      - contenu
+      - date_publication
+      - id
+      - image_url
+      - meta_description
+      - meta_titre
+      - rubrique
+      - slug
+      - titre
+    ArticleListe:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        titre:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        chapo:
+          type: string
+          readOnly: true
+          description: Résumé affiché dans les listes.
+        rubrique:
+          allOf:
+          - $ref: '#/components/schemas/Rubrique'
+          readOnly: true
+        date_publication:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          readOnly: true
+        image_url:
+          type: string
+          format: uri
+          readOnly: true
+          description: Placeholder — médiathèque MinIO au Bloc B/C.
+      required:
+      - chapo
+      - date_publication
+      - id
+      - image_url
+      - rubrique
+      - slug
+      - titre
+    ConfirmationMFAReponse:
+      type: object
+      properties:
+        mfa_active:
+          type: boolean
+      required:
+      - mfa_active
+    ConfirmationMFARequete:
+      type: object
+      properties:
+        code_totp:
+          type: string
+      required:
+      - code_totp
+    Connexion:
+      type: object
+      description: Émission de jeton JWT — exige un code TOTP valide pour les comptes
+        internes (§6.3).
+      properties:
+        code_totp:
+          type: string
+          writeOnly: true
+        email:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    ContactAccuse:
+      type: object
+      properties:
+        numero_ticket:
+          type: string
+          readOnly: true
+        sujet:
+          type: string
+          readOnly: true
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - cree_le
+      - numero_ticket
+      - sujet
+    ContactCreation:
+      type: object
+      properties:
+        nom:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        telephone:
+          type: string
+          maxLength: 30
+        sujet:
+          type: string
+          maxLength: 200
+        message:
+          type: string
+      required:
+      - email
+      - message
+      - nom
+      - sujet
+    DirectionRegionale:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        nom:
+          type: string
+          readOnly: true
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Region'
+          readOnly: true
+        directeur_nom:
+          type: string
+          readOnly: true
+        directeur_email:
+          type: string
+          format: email
+          readOnly: true
+        directeur_telephone:
+          type: string
+          readOnly: true
+      required:
+      - code
+      - directeur_email
+      - directeur_nom
+      - directeur_telephone
+      - id
+      - nom
+      - regions
+    DocumentPublic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        titre:
+          type: string
+          readOnly: true
+        nature:
+          allOf:
+          - $ref: '#/components/schemas/NatureEnum'
+          readOnly: true
+        numero:
+          type: string
+          readOnly: true
+        date_texte:
+          type:
+          - string
+          - 'null'
+          format: date
+          readOnly: true
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/DocumentPublicStatutEnum'
+          readOnly: true
+        categorie:
+          type: string
+          readOnly: true
+          description: 'Regroupement portail : textes-juridiques, concours, statistiques…'
+        fichier_url:
+          type: string
+          format: uri
+          readOnly: true
+          description: Placeholder — stockage MinIO au Bloc B/C.
+      required:
+      - categorie
+      - date_texte
+      - fichier_url
+      - id
+      - nature
+      - numero
+      - statut
+      - titre
+    DocumentPublicStatutEnum:
+      enum:
+      - EN_VIGUEUR
+      - ABROGE
+      type: string
+      description: |-
+        * `EN_VIGUEUR` - En vigueur
+        * `ABROGE` - Abrogé
+    Etablissement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        nom:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEtablissement'
+          readOnly: true
+        direction_regionale:
+          allOf:
+          - $ref: '#/components/schemas/DirectionRegionale'
+          readOnly: true
+        region:
+          allOf:
+          - $ref: '#/components/schemas/Region'
+          readOnly: true
+        capacite:
+          type:
+          - integer
+          - 'null'
+          readOnly: true
+        adresse:
+          type: string
+          readOnly: true
+        latitude:
+          type:
+          - string
+          - 'null'
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          readOnly: true
+        longitude:
+          type:
+          - string
+          - 'null'
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          readOnly: true
+        telephone:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        horaires_visite:
+          type: string
+          readOnly: true
+        conditions_visite:
+          type: string
+          readOnly: true
+          description: Pièces et objets autorisés, consignes pratiques.
+      required:
+      - adresse
+      - capacite
+      - code
+      - conditions_visite
+      - direction_regionale
+      - email
+      - horaires_visite
+      - id
+      - latitude
+      - longitude
+      - nom
+      - region
+      - telephone
+      - type
+    FAQ:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        question:
+          type: string
+          readOnly: true
+        reponse:
+          type: string
+          readOnly: true
+        categorie:
+          type: string
+          readOnly: true
+        ordre:
+          type: integer
+          readOnly: true
+      required:
+      - categorie
+      - id
+      - ordre
+      - question
+      - reponse
+    InscriptionMFAReponse:
+      type: object
+      properties:
+        cle_secrete:
+          type: string
+          description: URI otpauth:// à saisir manuellement dans l'application TOTP.
+        qr_code_png_base64:
+          type: string
+          description: QR code PNG encodé en base64, à afficher côté client.
+      required:
+      - cle_secrete
+      - qr_code_png_base64
+    NatureEnum:
+      enum:
+      - LOI
+      - DECRET
+      - ARRETE
+      - AVIS_CONCOURS
+      - COMMUNIQUE
+      - RAPPORT
+      type: string
+      description: |-
+        * `LOI` - Loi
+        * `DECRET` - Décret
+        * `ARRETE` - Arrêté
+        * `AVIS_CONCOURS` - Avis de concours
+        * `COMMUNIQUE` - Communiqué
+        * `RAPPORT` - Rapport
+    PageBackoffice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        titre:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          maxLength: 220
+          pattern: ^[-a-zA-Z0-9_]+$
+        contenu:
+          type: string
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutB45Enum'
+          readOnly: true
+        rubrique:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        meta_titre:
+          type: string
+          maxLength: 200
+        meta_description:
+          type: string
+          maxLength: 300
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        modifie_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - cree_le
+      - id
+      - modifie_le
+      - slug
+      - statut
+      - titre
+    PageDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        titre:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        contenu:
+          type: string
+          readOnly: true
+        rubrique:
+          allOf:
+          - $ref: '#/components/schemas/Rubrique'
+          readOnly: true
+        meta_titre:
+          type: string
+          readOnly: true
+        meta_description:
+          type: string
+          readOnly: true
+      required:
+      - contenu
+      - id
+      - meta_description
+      - meta_titre
+      - rubrique
+      - slug
+      - titre
+    PaginatedArticleBackofficeList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleBackoffice'
+    PaginatedArticleListeList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleListe'
+    PaginatedDirectionRegionaleList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DirectionRegionale'
+    PaginatedDocumentPublicList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentPublic'
+    PaginatedEtablissementList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Etablissement'
+    PaginatedPageBackofficeList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PageBackoffice'
+    PaginatedRegionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Region'
+    PaginatedTypeEtablissementList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TypeEtablissement'
+    PatchedArticleBackoffice:
+      type: object
+      description: CRUD éditorial complet — auteur/dates en lecture seule, reste modifiable.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        titre:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          maxLength: 220
+          pattern: ^[-a-zA-Z0-9_]+$
+        chapo:
+          type: string
+          description: Résumé affiché dans les listes.
+        contenu:
+          type: string
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutB45Enum'
+          readOnly: true
+        rubrique:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        date_publication:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          readOnly: true
+        image_url:
+          description: Placeholder — médiathèque MinIO au Bloc B/C.
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        meta_titre:
+          type: string
+          maxLength: 200
+        meta_description:
+          type: string
+          maxLength: 300
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        modifie_le:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedPageBackoffice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        titre:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          maxLength: 220
+          pattern: ^[-a-zA-Z0-9_]+$
+        contenu:
+          type: string
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutB45Enum'
+          readOnly: true
+        rubrique:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        meta_titre:
+          type: string
+          maxLength: 200
+        meta_description:
+          type: string
+          maxLength: 300
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        modifie_le:
+          type: string
+          format: date-time
+          readOnly: true
+    Region:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        nom:
+          type: string
+          readOnly: true
+      required:
+      - code
+      - id
+      - nom
+    Rubrique:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        titre:
+          type: string
+          readOnly: true
+        parent:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          readOnly: true
+        ordre:
+          type: integer
+          readOnly: true
+      required:
+      - code
+      - id
+      - ordre
+      - parent
+      - titre
+    StatutB45Enum:
+      enum:
+      - BROUILLON
+      - RELECTURE
+      - VALIDE
+      - PUBLIE
+      - ARCHIVE
+      type: string
+      description: |-
+        * `BROUILLON` - Brouillon
+        * `RELECTURE` - En relecture
+        * `VALIDE` - Validé
+        * `PUBLIE` - Publié
+        * `ARCHIVE` - Archivé
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    Transition:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        commentaire:
+          type: string
+          default: ''
+      required:
+      - action
+    TypeEtablissement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        libelle:
+          type: string
+          readOnly: true
+      required:
+      - code
+      - id
+      - libelle
+    Utilisateur:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        nom:
+          type: string
+          readOnly: true
+        prenom:
+          type: string
+          readOnly: true
+        matricule:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        est_agent_interne:
+          type: boolean
+          readOnly: true
+          description: 'Compte agent DGAP : MFA obligatoire, accès intranet/back-office.'
+        mfa_active:
+          type: boolean
+          readOnly: true
+        mfa_requis:
+          type: boolean
+          readOnly: true
+        scopes:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        perimetres:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - email
+      - est_agent_interne
+      - id
+      - matricule
+      - mfa_active
+      - mfa_requis
+      - nom
+      - perimetres
+      - prenom
+      - scopes
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

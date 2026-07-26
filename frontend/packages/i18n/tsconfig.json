@@ -1,0 +1,9 @@
+{
+  "extends": "@dgap/config/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] },
+    "resolveJsonModule": true
+  },
+  "include": ["src"]
+}

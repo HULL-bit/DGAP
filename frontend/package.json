@@ -1,0 +1,29 @@
+{
+  "name": "dgap-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Espace de travail frontend DGAP — 4 applications + design system partagé",
+  "scripts": {
+    "dev:portail": "pnpm --filter @dgap/portail dev",
+    "dev:demarches": "pnpm --filter @dgap/demarches dev",
+    "dev:intranet": "pnpm --filter @dgap/intranet dev",
+    "dev:backoffice": "pnpm --filter @dgap/backoffice dev",
+    "storybook": "pnpm --filter @dgap/ui storybook",
+    "build": "pnpm -r --filter=./apps/* build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r exec tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
+  "devDependencies": {
+    "@dgap/config": "workspace:*",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-jsx-a11y": "^6.10.0"
+  }
+}

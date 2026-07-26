@@ -1,0 +1,6 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+allowBuilds:
+  '@scarf/scarf': false # télémétrie d'un paquet tiers — désactivée (souveraineté)
+  esbuild: true # binaire natif nécessaire à Vite

@@ -1,0 +1,57 @@
+{
+  "commun": {
+    "rechercher": "Search",
+    "suivant": "Next",
+    "precedent": "Previous",
+    "enregistrer": "Save",
+    "envoyer": "Send",
+    "annuler": "Cancel",
+    "chargement": "Loading…",
+    "erreurGenerique": "Something went wrong. Please try again.",
+    "champObligatoire": "This field is required.",
+    "decouvrir": "Discover"
+  },
+  "nav": {
+    "accueil": "Home",
+    "aPropos": "About",
+    "vieDesDetenus": "Inmate life",
+    "actualites": "News",
+    "publications": "Official publications",
+    "reinsertion": "Reintegration",
+    "boutique": "Shop",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "annuaire": "Facility directory"
+  },
+  "demarches": {
+    "titre": "Your requests",
+    "demanderVisite": "Request a visit",
+    "sInscrireConcours": "Apply to a competitive exam",
+    "nousContacter": "Contact us",
+    "trouverEtablissement": "Find a facility"
+  },
+  "visites": {
+    "numeroSuivi": "Tracking number",
+    "suivreMaDemande": "Track my request",
+    "statut": {
+      "brouillon": "Draft",
+      "soumise": "Submitted",
+      "enInstruction": "Under review",
+      "piecesManquantes": "Documents missing",
+      "validee": "Approved",
+      "rejetee": "Rejected",
+      "permisDelivre": "Permit issued"
+    }
+  },
+  "piedDePage": {
+    "devise": "Justice — Honour — Dignity",
+    "liens": "Links",
+    "juridique": "Legal",
+    "newsletter": "Newsletter",
+    "newsletterTexte": "Get the latest news, activities and publications from the DGAP.",
+    "newsletterPlaceholder": "Your email address",
+    "newsletterBouton": "Subscribe",
+    "newsletterMerci": "Thank you, your subscription has been received.",
+    "droitsReserves": "All rights reserved"
+  }
+}

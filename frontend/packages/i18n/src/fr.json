@@ -1,0 +1,57 @@
+{
+  "commun": {
+    "rechercher": "Rechercher",
+    "suivant": "Suivant",
+    "precedent": "Précédent",
+    "enregistrer": "Enregistrer",
+    "envoyer": "Envoyer",
+    "annuler": "Annuler",
+    "chargement": "Chargement en cours…",
+    "erreurGenerique": "Une erreur est survenue. Veuillez réessayer.",
+    "champObligatoire": "Ce champ est obligatoire.",
+    "decouvrir": "Découvrir"
+  },
+  "nav": {
+    "accueil": "Accueil",
+    "aPropos": "À propos",
+    "vieDesDetenus": "Vie des détenus",
+    "actualites": "Actualité",
+    "publications": "Publications officielles",
+    "reinsertion": "La Réinsertion",
+    "boutique": "Boutique",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "annuaire": "Annuaire de l'AP"
+  },
+  "demarches": {
+    "titre": "Vos démarches",
+    "demanderVisite": "Demander une visite",
+    "sInscrireConcours": "S'inscrire à un concours",
+    "nousContacter": "Nous contacter",
+    "trouverEtablissement": "Trouver un établissement"
+  },
+  "visites": {
+    "numeroSuivi": "Numéro de suivi",
+    "suivreMaDemande": "Suivre ma demande",
+    "statut": {
+      "brouillon": "Brouillon",
+      "soumise": "Soumise",
+      "enInstruction": "En instruction",
+      "piecesManquantes": "Pièces manquantes",
+      "validee": "Validée",
+      "rejetee": "Rejetée",
+      "permisDelivre": "Permis délivré"
+    }
+  },
+  "piedDePage": {
+    "devise": "Justice — Honneur — Dignité",
+    "liens": "Liens",
+    "juridique": "Juridique",
+    "newsletter": "Newsletter",
+    "newsletterTexte": "Recevez les dernières nouvelles, activités et publications de la DGAP.",
+    "newsletterPlaceholder": "Votre adresse e-mail",
+    "newsletterBouton": "S'abonner",
+    "newsletterMerci": "Merci, votre inscription a bien été prise en compte.",
+    "droitsReserves": "Tous droits réservés"
+  }
+}

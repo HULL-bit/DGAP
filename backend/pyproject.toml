@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["config*", "core*", "apps*", "scripts*"]
+
+[project]
+name = "dgap-backend"
+version = "0.1.0"
+description = "Socle SI de la Direction Générale de l'Administration Pénitentiaire (Sénégal)"
+requires-python = ">=3.12"
+dependencies = [
+  "django>=5.1,<5.2",
+  "djangorestframework>=3.15",
+  "djangorestframework-simplejwt>=5.3",
+  "django-otp>=1.5",
+  "qrcode>=7.4",
+  "django-axes>=6.5",
+  "django-filter>=24.3",
+  "django-cors-headers>=4.4",
+  "drf-spectacular>=0.27",
+  "psycopg[binary]>=3.2",
+  "celery>=5.4",
+  "redis>=5.0",
+  "django-storages[s3]>=1.14",
+  "boto3>=1.35",
+  "weasyprint>=62.0",
+  "segno>=1.6",
+  "pyjwt>=2.9",
+  "python-decouple>=3.8",
+  "gunicorn>=23.0",
+  "sentry-sdk>=2.14",
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6",
+  "black>=24.8",
+  "mypy>=1.11",
+  "django-stubs>=5.0",
+  "djangorestframework-stubs>=3.15",
+  "pytest>=8.3",
+  "pytest-django>=4.9",
+  "pytest-cov>=5.0",
+  "factory-boy>=3.3",
+  "faker>=28.4",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ"]
+
+[tool.ruff.lint.per-file-ignores]
+"*/migrations/*.py" = ["E501"]
+"scripts/seed.py" = ["E501"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.mypy]
+# Mode pragmatique pour la Phase 0 : le strict mode complet (générique Manager[Model],
+# ModelAdmin[Model], retours -> None systématiques…) est visé à terme mais s'introduit
+# app par app plutôt que d'imposer d'un coup un mur d'erreurs de typage sur un scaffold
+# encore mouvant. check_untyped_defs reste actif pour capter les vraies erreurs.
+plugins = ["mypy_django_plugin.main"]
+python_version = "3.12"
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_reexport = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "*.migrations.*"
+ignore_errors = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.dev"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "--cov=apps --cov=core --cov-report=term-missing"

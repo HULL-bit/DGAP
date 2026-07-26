@@ -1,0 +1,170 @@
+name: dgap
+
+# Identifiants et noms d'hôtes internes au réseau Docker — volontairement en dur
+# (pas d'interpolation depuis .env) : ce fichier doit rester reproductible sur
+# n'importe quelle machine quel que soit le contenu du .env local d'un développeur
+# (ex. un backend lancé hors Docker peut pointer vers un PostgreSQL natif différent —
+# voir backend/README.md). Aucune de ces valeurs n'est utilisée en production.
+x-backend-env: &backend-env
+  env_file: .env
+  environment:
+    DJANGO_SETTINGS_MODULE: config.settings.dev
+    POSTGRES_DB: dgap
+    POSTGRES_USER: dgap
+    POSTGRES_PASSWORD: dgap
+    POSTGRES_HOST: db
+    POSTGRES_PORT: "5432"
+    REDIS_URL: redis://redis:6379/0
+    MINIO_ENDPOINT_URL: http://minio:9000
+    MINIO_ACCESS_KEY: dgap
+    MINIO_SECRET_KEY: dgap-dev-secret
+    MINIO_BUCKET: dgap-medias
+    EMAIL_HOST: mailhog
+    EMAIL_PORT: "1025"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dgap
+      POSTGRES_USER: dgap
+      POSTGRES_PASSWORD: dgap
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dgap"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: dgap
+      MINIO_ROOT_PASSWORD: dgap-dev-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025" # IHM de consultation des e-mails de test
+
+  backend:
+    build: ./backend
+    <<: *backend-env
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+
+  worker:
+    build: ./backend
+    <<: *backend-env
+    restart: unless-stopped
+    command: celery -A config worker -l info
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - backend
+
+  beat:
+    build: ./backend
+    <<: *backend-env
+    restart: unless-stopped
+    command: celery -A config beat -l info
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - backend
+
+  frontend-build:
+    image: node:22-alpine
+    working_dir: /workspace
+    volumes:
+      - ./frontend:/workspace
+    environment:
+      VITE_API_BASE_URL: /api/v1
+      VITE_DEMARCHES_URL: https://demarches.localhost
+      CI: "true"
+    command: >
+      sh -c "corepack enable &&
+             pnpm install --frozen-lockfile=false &&
+             pnpm -r --filter=./apps/* build"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./frontend/apps/portail/dist:/usr/share/nginx/html/portail:ro
+      - ./frontend/apps/demarches/dist:/usr/share/nginx/html/demarches:ro
+      - ./frontend/apps/intranet/dist:/usr/share/nginx/html/intranet:ro
+      - ./frontend/apps/backoffice/dist:/usr/share/nginx/html/backoffice:ro
+    depends_on:
+      backend:
+        condition: service_started
+      frontend-build:
+        condition: service_completed_successfully
+
+  # --- Profil "full" — services optionnels (§4.2, §9.2) ---------------------------
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    profiles: ["full"]
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    profiles: ["full"]
+    restart: unless-stopped
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: change-moi
+    ports:
+      - "8081:8080"
+
+volumes:
+  db_data:
+  minio_data:
+  es_data:

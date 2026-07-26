@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" role="img" aria-labelledby="dgapEmblemTitle">
+  <title id="dgapEmblemTitle">Emblème de la Direction Générale de l'Administration Pénitentiaire du Sénégal</title>
+  <defs>
+    <clipPath id="dgap-shield-clip">
+      <path d="M14 10 H186 V150 L100 214 L14 150 Z" />
+    </clipPath>
+  </defs>
+
+  <!-- Bordure héraldique -->
+  <path d="M10 6 H190 V152 L100 218 L10 152 Z" fill="#FFFFFF" />
+
+  <!-- Écu : trois bandes verticales du drapeau sénégalais -->
+  <g clip-path="url(#dgap-shield-clip)">
+    <rect x="14" y="10" width="57.3" height="204" fill="#00853F" />
+    <rect x="71.3" y="10" width="57.4" height="204" fill="#FDEF42" />
+    <rect x="128.7" y="10" width="57.3" height="204" fill="#E31B23" />
+  </g>
+  <path d="M14 10 H186 V150 L100 214 L14 150 Z" fill="none" stroke="#FFFFFF" stroke-width="3" />
+
+  <!-- Couronne de lauriers -->
+  <g fill="#FFFFFF">
+    <path d="M46 46 C36 60 32 78 36 96 C40 114 50 130 66 142 C58 128 54 112 54 96 C54 80 58 62 46 46 Z" />
+    <path d="M40 66 C34 76 33 88 37 100 C41 90 44 80 48 70 Z" />
+    <path d="M38 90 C34 100 34 112 39 122 C42 112 43 102 45 92 Z" />
+    <path d="M42 112 C40 122 42 132 48 140 C48 130 47 120 47 110 Z" />
+    <path d="M52 130 C52 138 56 146 63 150 C61 142 59 134 58 126 Z" />
+
+    <path d="M154 46 C164 60 168 78 164 96 C160 114 150 130 134 142 C142 128 146 112 146 96 C146 80 142 62 154 46 Z" />
+    <path d="M160 66 C166 76 167 88 163 100 C159 90 156 80 152 70 Z" />
+    <path d="M162 90 C166 100 166 112 161 122 C158 112 157 102 155 92 Z" />
+    <path d="M158 112 C160 122 158 132 152 140 C152 130 153 120 153 110 Z" />
+    <path d="M148 130 C148 138 144 146 137 150 C139 142 141 134 142 126 Z" />
+
+    <!-- Ruban noué en bas -->
+    <path d="M66 142 C78 152 90 156 100 156 C110 156 122 152 134 142 L124 150 C114 158 108 176 108 176 L100 162 L92 176 C92 176 86 158 76 150 Z" />
+  </g>
+
+  <!-- Balance de la justice -->
+  <g fill="#FFFFFF" stroke="#FFFFFF" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Fléau -->
+    <path d="M56 66 C70 58 86 54 100 54 C114 54 130 58 144 66" fill="none" stroke-width="4.5" />
+    <!-- Colonne -->
+    <rect x="97.5" y="58" width="5" height="80" fill="#FFFFFF" stroke="none" />
+    <!-- Fixation supérieure -->
+    <circle cx="100" cy="56" r="5" stroke="none" />
+    <!-- Chaînes gauche -->
+    <g stroke-width="1.2" fill="none">
+      <path d="M56 66 L46 92" />
+      <path d="M56 66 L56 92" />
+      <path d="M56 66 L66 92" />
+    </g>
+    <path d="M42 92 H70 L64 100 H48 Z" stroke="none" />
+    <circle cx="56" cy="66" r="3.5" stroke="none" />
+    <!-- Chaînes droite -->
+    <g stroke-width="1.2" fill="none">
+      <path d="M144 66 L134 92" />
+      <path d="M144 66 L144 92" />
+      <path d="M144 66 L154 92" />
+    </g>
+    <path d="M130 92 H158 L152 100 H136 Z" stroke="none" />
+    <circle cx="144" cy="66" r="3.5" stroke="none" />
+    <!-- Socle -->
+    <path d="M84 138 L100 132 L116 138 L100 144 Z" stroke="none" />
+    <circle cx="100" cy="138" r="4.5" stroke="none" />
+    <rect x="88" y="150" width="24" height="4" rx="2" stroke="none" />
+  </g>
+
+  <!-- Étoile verte à cinq branches -->
+  <path d="M100 78 L106.9 96.8 L127 97.6 L111.2 110 L116.9 129.4 L100 118.2 L83.1 129.4 L88.8 110 L73 97.6 L93.1 96.8 Z" fill="#00853F" />
+</svg>

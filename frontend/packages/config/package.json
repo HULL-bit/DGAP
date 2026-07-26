@@ -1,0 +1,12 @@
+{
+  "name": "@dgap/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Presets partagés : Tailwind, ESLint, TypeScript — DGAP",
+  "main": "index.js",
+  "files": [
+    "tailwind-preset.js",
+    "eslint-preset.js",
+    "tsconfig.base.json"
+  ]
+}

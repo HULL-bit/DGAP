@@ -1,0 +1,171 @@
+from drf_spectacular.utils import extend_schema
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
+from apps.audit.models import Action, JournalAction
+from core.pagination import PaginationParCurseur
+from core.permissions import MFAConfirmee
+
+from .models import Article, Page, StatutContenu, TransitionInvalide
+from .permissions import PeutEditerContenu, PeutRedigerContenu, PeutTransitionner
+from .serializers import (
+    ArticleBackofficeSerializer,
+    ArticleDetailSerializer,
+    ArticleListeSerializer,
+    PageBackofficeSerializer,
+    PageDetailSerializer,
+    TransitionSerializer,
+    VersionContenuSerializer,
+)
+
+
+class ArticleListView(ListAPIView):
+    """GET /api/v1/articles?rubrique=&q= — actualités publiées uniquement (§7.2)."""
+
+    serializer_class = ArticleListeSerializer
+    pagination_class = PaginationParCurseur
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        qs = Article.objets.publies().select_related("rubrique")
+        rubrique = self.request.query_params.get("rubrique")
+        if rubrique:
+            qs = qs.filter(rubrique__code=rubrique)
+        recherche = self.request.query_params.get("q")
+        if recherche:
+            qs = qs.filter(titre__icontains=recherche)
+        return qs
+
+
+class ArticleDetailView(RetrieveAPIView):
+    """GET /api/v1/articles/{slug} — publique, uniquement les articles publiés."""
+
+    queryset = Article.objets.publies().select_related("rubrique")
+    serializer_class = ArticleDetailSerializer
+    permission_classes = [AllowAny]
+    lookup_field = "slug"
+
+
+class PageDetailView(RetrieveAPIView):
+    """GET /api/v1/pages/{slug} — pages institutionnelles publiées (À propos, Historique…)."""
+
+    queryset = Page.objets.filter(statut=StatutContenu.PUBLIE).select_related("rubrique")
+    serializer_class = PageDetailSerializer
+    permission_classes = [AllowAny]
+    lookup_field = "slug"
+
+
+# --- Back-office (Bloc C) ----------------------------------------------------------
+
+
+class ContenuEditorialViewSetMixin(viewsets.GenericViewSet):
+    """Actions communes de workflow/versions pour les ViewSets Article/Page back-office.
+
+    Le `queryset` de chaque sous-classe concrète pointe déjà sur `tous_les_objets`
+    (tous statuts confondus) : le back-office doit voir les brouillons et contenus
+    en relecture, contrairement à l'API publique (Bloc B) limitée aux publiés.
+    """
+
+    permission_classes = [MFAConfirmee, PeutEditerContenu]
+    pagination_class = PaginationParCurseur
+
+    #: Actions réservées aux rédacteurs (création/modification/suppression du contenu).
+    actions_redaction = {"create", "update", "partial_update", "destroy", "restaurer"}
+
+    def get_permissions(self):
+        if self.action in self.actions_redaction:
+            return [MFAConfirmee(), PeutRedigerContenu()]
+        if self.action == "transition":
+            return [MFAConfirmee(), PeutEditerContenu(), PeutTransitionner()]
+        return [MFAConfirmee(), PeutEditerContenu()]
+
+    def perform_create(self, serializer):
+        instance = serializer.save(cree_par=self.request.user, modifie_par=self.request.user)
+        instance.creer_version(acteur=self.request.user, commentaire="Création")
+        JournalAction.tracer(
+            acteur=self.request.user,
+            action=Action.CREER,
+            ressource_type=instance._meta.db_table,
+            ressource_id=str(instance.pk),
+            requete=self.request,
+        )
+
+    def perform_update(self, serializer):
+        instance = serializer.save(modifie_par=self.request.user)
+        instance.creer_version(acteur=self.request.user, commentaire="Modification")
+        JournalAction.tracer(
+            acteur=self.request.user,
+            action=Action.MODIFIER,
+            ressource_type=instance._meta.db_table,
+            ressource_id=str(instance.pk),
+            requete=self.request,
+        )
+
+    @extend_schema(request=TransitionSerializer, responses=None)
+    @action(detail=True, methods=["post"])
+    def transition(self, request, pk=None):
+        """POST .../{id}/transition — {"action": "soumettre|valider|..."}.
+
+        Actions possibles : soumettre, valider, rejeter, publier, archiver, reactiver.
+        Voir `TRANSITIONS_AUTORISEES` (models.py) pour la matrice complète.
+        """
+        serializeur = TransitionSerializer(data=request.data)
+        serializeur.is_valid(raise_exception=True)
+        instance = self.get_object()
+        try:
+            instance.transitionner(
+                serializeur.validated_data["action"],
+                acteur=request.user,
+                commentaire=serializeur.validated_data.get("commentaire", ""),
+            )
+        except TransitionInvalide as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_409_CONFLICT)
+
+        JournalAction.tracer(
+            acteur=request.user,
+            action=Action.VALIDER,
+            ressource_type=instance._meta.db_table,
+            ressource_id=str(instance.pk),
+            requete=request,
+            detail={"transition": serializeur.validated_data["action"]},
+        )
+        return Response(self.get_serializer(instance).data)
+
+    @action(detail=True, methods=["get"])
+    def versions(self, request, pk=None):
+        instance = self.get_object()
+        return Response(VersionContenuSerializer(instance.versions(), many=True).data)
+
+    @action(detail=True, methods=["post"], url_path="versions/(?P<numero>[0-9]+)/restaurer")
+    def restaurer(self, request, pk=None, numero=None):
+        instance = self.get_object()
+        version = instance.versions().filter(numero=numero).first()
+        if version is None:
+            return Response({"detail": "Version introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        instance.restaurer(version, acteur=request.user)
+        JournalAction.tracer(
+            acteur=request.user,
+            action=Action.MODIFIER,
+            ressource_type=instance._meta.db_table,
+            ressource_id=str(instance.pk),
+            requete=request,
+            detail={"restauration_version": int(numero)},
+        )
+        return Response(self.get_serializer(instance).data)
+
+
+class ArticleBackofficeViewSet(ContenuEditorialViewSetMixin, viewsets.ModelViewSet):
+    """CRUD + workflow éditorial des articles — `/api/v1/backoffice/articles`."""
+
+    queryset = Article.tous_les_objets.select_related("rubrique").all()  # type: ignore[misc]
+    serializer_class = ArticleBackofficeSerializer
+
+
+class PageBackofficeViewSet(ContenuEditorialViewSetMixin, viewsets.ModelViewSet):
+    """CRUD + workflow éditorial des pages — `/api/v1/backoffice/pages`."""
+
+    queryset = Page.tous_les_objets.select_related("rubrique").all()  # type: ignore[misc]
+    serializer_class = PageBackofficeSerializer

@@ -1,0 +1,21 @@
+{
+  "name": "@dgap/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Client HTTP + types générés depuis l'OpenAPI DGAP (orval)",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "generate": "orval --config orval.config.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.59.0"
+  },
+  "devDependencies": {
+    "@dgap/config": "workspace:*",
+    "orval": "^7.2.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0"
+  }
+}
