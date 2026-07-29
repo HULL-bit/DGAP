@@ -76,7 +76,110 @@ erDiagram
 | `attributions_permission` | Permission accordée directement, hors rôle | unique (utilisateur, permission, périmètre) |
 | `journal_actions` | Audit append-only | aucune contrainte de mise à jour (voir `apps.audit`) |
 
+## Bloc D — Téléservice Visites (`apps.visites`)
+
+```mermaid
+erDiagram
+    ETABLISSEMENT ||--o{ CRENEAU_VISITE : propose
+    ETABLISSEMENT ||--o{ DEMANDE_VISITE : concerne
+    CRENEAU_VISITE ||--o{ DEMANDE_VISITE : reserve
+    DEMANDE_VISITE ||--o{ PIECE_JOINTE_VISITE : "documente"
+    DEMANDE_VISITE ||--o| PERMIS_VISITE : "délivre"
+
+    DEMANDE_VISITE {
+        uuid id PK
+        string numero_suivi UK
+        string code_suivi
+        string statut
+        string visiteur_nom
+        string visiteur_email
+        string detenu_nom_declare
+        date date_souhaitee
+        string cle_idempotence UK
+    }
+    CRENEAU_VISITE {
+        uuid id PK
+        date jour
+        time heure_debut
+        time heure_fin
+        int capacite
+    }
+    PIECE_JOINTE_VISITE {
+        uuid id PK
+        string type_piece
+        string empreinte_sha256
+        string statut_controle
+    }
+    PERMIS_VISITE {
+        uuid id PK
+        string numero_permis UK
+        text charge_qr_jws
+        date valide_jusqu_au
+        bool revoque
+    }
+```
+
+| Table | Rôle | Contrainte notable |
+|---|---|---|
+| `demandes_visite` | Dépôt en ligne, machine à états | `numero_suivi`/`cle_idempotence` uniques |
+| `creneaux_visite` | Plages horaires par établissement | capacité bornée |
+| `pieces_jointes_visite` | Justificatifs téléversés | SHA-256 calculé à l'enregistrement |
+| `permis_visite` | Permis signé (JWS), 1↔1 avec la demande | `numero_permis` unique |
+
+## Extension Bloc B — Galeries (`apps.mediatheque`)
+
+```mermaid
+erDiagram
+    GALERIE ||--o{ MEDIA_GALERIE : contient
+    ARTICLE }o--o| GALERIE : illustre
+
+    GALERIE {
+        uuid id PK
+        string code UK
+        string titre
+    }
+    MEDIA_GALERIE {
+        uuid id PK
+        string type
+        string image
+        string video_url
+        int ordre
+        bool publie
+    }
+```
+
+| Table | Rôle | Contrainte notable |
+|---|---|---|
+| `galeries` | Collection de médias, référencée par `code` | `code` unique |
+| `medias_galerie` | Image (MinIO) ou vidéo (lien incorporé) | exactement un des deux selon `type` |
+
+## Boutique (`apps.boutique`)
+
+Vitrine des produits fabriqués par les personnes détenues — catalogue de
+présentation uniquement, aucune entité panier/commande/paiement (décision produit).
+
+```mermaid
+erDiagram
+    PRODUIT_BOUTIQUE {
+        uuid id PK
+        string nom
+        string slug UK
+        string categorie
+        decimal prix
+        decimal prix_promotionnel
+        string image
+        bool disponible
+        int ordre
+    }
+```
+
+| Table | Rôle | Contrainte notable |
+|---|---|---|
+| `produits_boutique` | Fiche produit, vitrine publique filtrable par `categorie` | `slug` unique ; ni panier ni paiement |
+
 ## À venir
 
-Chaque bloc (B à G, voir `docs/architecture.md`) ajoutera ses entités réelles à ce
-document au moment de sa livraison, pas avant.
+Le bloc E (`apps.concours`, `apps.paiements` — voir `docs/architecture.md`) est
+livré et fonctionnel mais son MCD reste à documenter ici. Les blocs F et G
+restants ajouteront leurs entités réelles à ce document au moment de leur
+livraison, pas avant.

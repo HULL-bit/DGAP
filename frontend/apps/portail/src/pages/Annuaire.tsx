@@ -10,10 +10,23 @@ import { propsApparition } from '@dgap/ui'
 import type { Etablissement, Pagination } from '../types/api'
 
 /**
- * Style vectoriel libre fourni par le projet MapLibre (aucune clé, aucun service
- * tiers propriétaire — cohérent avec l'exigence de souveraineté, §4.2).
+ * Tuiles raster OpenStreetMap — aucune clé, aucun service propriétaire (cohérent
+ * avec l'exigence de souveraineté, §4.2). `demotiles.maplibre.org` (l'ancien style)
+ * est un service de démonstration du projet MapLibre non destiné à la production
+ * (données très partielles, débit limité) ; OSM fournit une cartographie complète.
  */
-const STYLE_CARTE = 'https://demotiles.maplibre.org/style.json'
+const STYLE_CARTE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      attribution: '© Contributeurs OpenStreetMap',
+    },
+  },
+  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+}
 
 export function Annuaire() {
   const conteneurCarte = useRef<HTMLDivElement>(null)

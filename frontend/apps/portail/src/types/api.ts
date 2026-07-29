@@ -61,6 +61,7 @@ export interface ArticleListe {
 
 export interface ArticleDetail extends ArticleListe {
   contenu: string
+  galerie_code: string | null
   meta_titre: string
   meta_description: string
 }
@@ -83,4 +84,65 @@ export interface Pagination<T> {
   next: string | null
   previous: string | null
   results: T[]
+}
+
+export type TypeMedia = 'IMAGE' | 'VIDEO'
+
+export interface MediaGalerie {
+  id: string
+  type: TypeMedia
+  image: string | null
+  video_url: string
+  legende: string
+  ordre: number
+}
+
+export interface Galerie {
+  id: string
+  code: string
+  titre: string
+  description: string
+  medias: MediaGalerie[]
+}
+
+export interface GalerieResume {
+  id: string
+  code: string
+  titre: string
+  description: string
+  couverture: string
+  nombre_medias: number
+}
+
+export type NatureDocument = 'LOI' | 'DECRET' | 'ARRETE' | 'AVIS_CONCOURS' | 'COMMUNIQUE' | 'RAPPORT'
+
+export const LIBELLES_NATURE_DOCUMENT: Record<NatureDocument, string> = {
+  LOI: 'Loi',
+  DECRET: 'Décret',
+  ARRETE: 'Arrêté',
+  AVIS_CONCOURS: 'Avis de concours',
+  COMMUNIQUE: 'Communiqué',
+  RAPPORT: 'Rapport',
+}
+
+export interface DocumentOfficiel {
+  id: string
+  titre: string
+  nature: NatureDocument
+  numero: string
+  date_texte: string | null
+  statut: 'EN_VIGUEUR' | 'ABROGE'
+  categorie: string
+  fichier_url: string
+}
+
+export interface ProduitBoutique {
+  id: string
+  nom: string
+  slug: string
+  categorie: string
+  description: string
+  prix: string
+  prix_promotionnel: string | null
+  image_url: string
 }

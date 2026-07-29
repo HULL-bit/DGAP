@@ -16,12 +16,15 @@ from datetime import date, datetime
 
 from django.utils import timezone
 
+from apps.boutique.models import ProduitBoutique
 from apps.comptes.models import AffectationRole, Perimetre, Permission, Role, Utilisateur
 from apps.contenus.models import Article, Rubrique, StatutContenu
 from apps.demarches.models import FAQ
 from apps.etablissements.models import Etablissement
+from apps.intranet.models import NoteDeService
 from apps.mediatheque.models import DocumentPublic, NatureDocument
 from apps.referentiels.models import DirectionRegionale, Region, TypeEtablissement
+from apps.rh.models import AffectationAgent, DossierAgent, SoldeConge
 
 MOT_DE_PASSE_DEMO = "DemoDGAP2026!"  # Dev uniquement — jamais utilisé en production (§15).
 
@@ -209,14 +212,35 @@ def seed_documents() -> None:
             "Concours direct — Agents administratifs",
             NatureDocument.AVIS_CONCOURS,
             "",
-            None,
+            date(2024, 11, 14),
             "concours",
         ),
         (
             "Concours direct — Inspecteurs",
             NatureDocument.AVIS_CONCOURS,
             "",
-            None,
+            date(2024, 11, 14),
+            "concours",
+        ),
+        (
+            "Concours direct — Contrôleurs",
+            NatureDocument.AVIS_CONCOURS,
+            "",
+            date(2024, 11, 14),
+            "concours",
+        ),
+        (
+            "Concours direct — Surveillants",
+            NatureDocument.AVIS_CONCOURS,
+            "",
+            date(2024, 11, 14),
+            "concours",
+        ),
+        (
+            "Programme du concours ENAP",
+            NatureDocument.AVIS_CONCOURS,
+            "",
+            date(2021, 9, 23),
             "concours",
         ),
     ]
@@ -228,6 +252,59 @@ def seed_documents() -> None:
                 "numero": numero,
                 "date_texte": date_texte,
                 "categorie": categorie,
+            },
+        )
+
+
+def seed_boutique() -> None:
+    produits = [
+        ("jus-bissap-1l", "Jus Bissap 1 Litre", "Jus locaux", 1300, 1200),
+        ("jus-de-bouye-1l", "Jus de Bouye 1 Litre", "Jus locaux", 1300, None),
+        ("penipro-detergent-1000mg", "PENIPRO Détergent 1000mg", "Produits d'entretien", 850, None),
+        ("penipro-lave-vitre", "PENIPRO Lave-Vitre", "Produits d'entretien", 1000, None),
+        ("salon-7-places", "Salon 7 places", "Mobilier", 450000, None),
+        ("son-de-ble-200g", "Son de Blé 200g", "Céréales locales", 2500, 2250),
+    ]
+    for i, (slug, nom, categorie, prix, prix_promotionnel) in enumerate(produits):
+        ProduitBoutique.objects.get_or_create(
+            slug=slug,
+            defaults={
+                "nom": nom,
+                "categorie": categorie,
+                "prix": prix,
+                "prix_promotionnel": prix_promotionnel,
+                "ordre": i,
+            },
+        )
+
+
+def seed_intranet() -> None:
+    perimetre_national, _ = Perimetre.objects.get_or_create(
+        code="national", defaults={"type": Perimetre.TypePerimetre.NATIONAL, "libelle": "National"}
+    )
+    notes = [
+        (
+            "Rappel des consignes d'hygiène en établissement",
+            "Chaque établissement veille à l'application stricte des consignes "
+            "d'hygiène en vigueur, notamment dans les espaces communs et les "
+            "quartiers de détention.",
+            True,
+        ),
+        (
+            "Mise à jour des procédures de sécurité aux entrées",
+            "Les procédures de contrôle à l'entrée des établissements sont mises "
+            "à jour ; les chefs d'établissement en assurent la diffusion auprès "
+            "de leurs équipes.",
+            False,
+        ),
+    ]
+    for titre, contenu, accuse_requis in notes:
+        NoteDeService.objects.get_or_create(
+            titre=titre,
+            defaults={
+                "contenu": contenu,
+                "perimetre_cible": perimetre_national,
+                "accuse_lecture_requis": accuse_requis,
             },
         )
 
@@ -457,15 +534,56 @@ ROLES_DEMO = [
     (
         "chef-etablissement",
         "Chef d'établissement",
-        ["visites:instruire", "visites:controler", "intranet:consulter"],
+        [
+            "visites:instruire",
+            "visites:controler",
+            "intranet:consulter",
+            "intranet:publier",
+            "courrier:gerer",
+            "courrier:viser",
+            "rh:valider",
+        ],
         True,
     ),
-    ("redacteur", "Rédacteur éditorial", ["contenus:rediger"], True),
+    (
+        "redacteur",
+        "Rédacteur éditorial",
+        ["contenus:rediger", "documents:gerer", "boutique:gerer"],
+        True,
+    ),
     ("valideur", "Valideur éditorial", ["contenus:rediger", "contenus:valider"], True),
     (
         "administrateur",
         "Administrateur",
-        ["contenus:rediger", "contenus:valider", "contenus:publier", "stats:lire"],
+        [
+            "contenus:rediger",
+            "contenus:valider",
+            "contenus:publier",
+            "stats:lire",
+            "concours:gerer",
+            "concours:instruire",
+            "documents:gerer",
+            "visites:instruire",
+            "visites:controler",
+            "boutique:gerer",
+            "intranet:consulter",
+            "intranet:publier",
+            "notifications:lire",
+            "courrier:gerer",
+            "courrier:viser",
+            "courrier:valider",
+            "courrier:confidentiel",
+            "ged:consulter",
+            "ged:gerer",
+            "rh:gerer",
+            "rh:valider",
+            "comptes:gerer",
+            "audit:consulter",
+            "detenus:consulter",
+            "detenus:gerer",
+            "interop:consulter",
+            "interop:gerer",
+        ],
         True,
     ),
 ]
@@ -501,13 +619,63 @@ def seed_comptes() -> None:
                 "nom": code.replace("-", " ").title(),
                 "prenom": "Démo",
                 "est_agent_interne": est_interne,
+                "compte_demonstration": True,
             },
         )
         if cree:
             utilisateur.set_password(MOT_DE_PASSE_DEMO)
             utilisateur.save(update_fields=["password"])
+        if code == "administrateur" and not utilisateur.est_superviseur_national:
+            # Bypass de périmètre ET de scope reconnu par chaque permission applicative
+            # (`... or utilisateur.est_superviseur_national`) : l'administrateur doit
+            # avoir tous les droits, pas seulement ceux listés ci-dessus qui dériveraient
+            # sinon au fil de l'ajout de nouveaux scopes par les blocs futurs.
+            utilisateur.est_superviseur_national = True
+            utilisateur.save(update_fields=["est_superviseur_national"])
         AffectationRole.objects.get_or_create(
             utilisateur=utilisateur, role=roles[code], perimetre=perimetre_national
+        )
+
+
+DOSSIERS_RH_DEMO = [
+    ("agent", "Surveillants", "Surveillant principal", "Agent de terrain"),
+    (
+        "administrateur",
+        "Personnel administratif",
+        "Attaché d'administration",
+        "Administrateur système",
+    ),
+]
+
+
+def seed_rh() -> None:
+    perimetre_national, _ = Perimetre.objects.get_or_create(
+        code="national", defaults={"type": Perimetre.TypePerimetre.NATIONAL, "libelle": "National"}
+    )
+    annee_courante = timezone.now().year
+    for code, corps, grade, fonction in DOSSIERS_RH_DEMO:
+        utilisateur = Utilisateur.objects.filter(
+            email=f"demo.{code}@administrationpenitentiaire.sn"
+        ).first()
+        if utilisateur is None:
+            continue
+        dossier, _ = DossierAgent.objets.get_or_create(
+            utilisateur=utilisateur,
+            defaults={
+                "corps": corps,
+                "grade": grade,
+                "date_entree_service": date(2018, 9, 1),
+            },
+        )
+        if not dossier.affectations.exists():
+            AffectationAgent.objects.create(
+                dossier=dossier,
+                perimetre=perimetre_national,
+                fonction=fonction,
+                date_debut=date(2018, 9, 1),
+            )
+        SoldeConge.objects.get_or_create(
+            dossier=dossier, annee=annee_courante, defaults={"jours_acquis": 24}
         )
 
 
@@ -516,8 +684,11 @@ def run() -> None:
     seed_etablissements(irap)
     seed_contenus()
     seed_documents()
+    seed_boutique()
+    seed_intranet()
     seed_faq()
     seed_comptes()
+    seed_rh()
     print("Seed terminé.")
     print(f"Comptes de démo créés (mot de passe : {MOT_DE_PASSE_DEMO}) :")
     for code, _libelle, _perms, est_interne in ROLES_DEMO:

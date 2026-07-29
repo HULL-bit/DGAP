@@ -1,9 +1,12 @@
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
-import { propsApparition } from '@dgap/ui'
+import { propsApparition, GalerieMedias } from '@dgap/ui'
+import { requeteApi } from '@dgap/api-client'
 import { trouverCategorie } from '../data/reinsertion'
+import type { Galerie } from '../types/api'
 
 const degradesGalerie = [
   ['#0B6E4F', '#123524'],
@@ -23,6 +26,13 @@ const degradesGalerie = [
 export function ReinsertionCategorie() {
   const { slug } = useParams<{ slug: string }>()
   const categorie = trouverCategorie(slug)
+
+  const { data: galerie } = useQuery({
+    queryKey: ['galerie', `reinsertion-${slug}`],
+    queryFn: () => requeteApi<Galerie>(`/galeries/reinsertion-${slug}`),
+    enabled: Boolean(categorie),
+    retry: false,
+  })
 
   if (!categorie) {
     return <Navigate to="/reinsertion" replace />
@@ -58,19 +68,25 @@ export function ReinsertionCategorie() {
 
       <motion.section className="mx-auto max-w-conteneur px-6 py-20 sm:px-8" {...propsApparition()}>
         <h2 className="font-titre text-xl font-bold text-text-strong dark:text-text-inv-strong">Galerie</h2>
-        <p className="mt-1 font-corps text-sm text-text-muted dark:text-text-inv-muted">
-          Vignettes de démonstration — à remplacer par les photographies officielles de l'atelier.
-        </p>
-        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {degradesGalerie.map(([de, a], i) => (
-            <div
-              key={i}
-              className="aspect-square rounded-carte"
-              style={{ background: `linear-gradient(135deg, ${de}, ${a})` }}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        {galerie && galerie.medias.length > 0 ? (
+          <GalerieMedias medias={galerie.medias} />
+        ) : (
+          <>
+            <p className="mt-1 font-corps text-sm text-text-muted dark:text-text-inv-muted">
+              Vignettes de démonstration — à remplacer par les photographies officielles de l'atelier.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {degradesGalerie.map(([de, a], i) => (
+                <div
+                  key={i}
+                  className="aspect-square rounded-carte"
+                  style={{ background: `linear-gradient(135deg, ${de}, ${a})` }}
+                  aria-hidden="true"
+                />
+              ))}
+            </div>
+          </>
+        )}
       </motion.section>
     </>
   )

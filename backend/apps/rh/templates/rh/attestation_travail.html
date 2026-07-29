@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<style>
+  @page { size: A4; margin: 30mm 25mm; }
+  body { font-family: "DejaVu Sans", sans-serif; color: #123524; font-size: 12pt; line-height: 1.6; }
+  .bandeau { text-align: center; border-bottom: 2px solid #0B6E4F; padding-bottom: 12px; margin-bottom: 28px; }
+  .bandeau h1 { font-size: 14pt; margin: 0 0 4px; color: #0B6E4F; }
+  .bandeau p { margin: 0; font-size: 9pt; color: #5B6B62; }
+  .titre { text-align: center; font-size: 15pt; font-weight: bold; margin: 20px 0 28px; text-decoration: underline; }
+  .corps { text-align: justify; }
+  .numero { margin-top: 40px; font-family: monospace; font-size: 10pt; color: #5B6B62; }
+  .pied { margin-top: 60px; text-align: right; }
+</style>
+</head>
+<body>
+  <div class="bandeau">
+    <h1>République du Sénégal — Ministère de la Justice</h1>
+    <p>Direction Générale de l'Administration Pénitentiaire</p>
+  </div>
+
+  <div class="titre">ATTESTATION DE TRAVAIL</div>
+
+  <div class="corps">
+    <p>
+      La Direction Générale de l'Administration Pénitentiaire atteste que
+      {{ demande.dossier.utilisateur.prenom }} {{ demande.dossier.utilisateur.nom }}
+      {% if demande.dossier.utilisateur.matricule %}(matricule {{ demande.dossier.utilisateur.matricule }}){% endif %}
+      {% if demande.dossier.grade %}, {{ demande.dossier.grade }}{% endif %}
+      {% if demande.dossier.corps %} du corps {{ demande.dossier.corps }}{% endif %},
+      est agent de la Direction Générale de l'Administration Pénitentiaire
+      {% if demande.dossier.date_entree_service %}depuis le {{ demande.dossier.date_entree_service|date:"d F Y" }}{% endif %}.
+    </p>
+    <p>
+      La présente attestation est délivrée à l'intéressé(e) pour servir et valoir
+      ce que de droit.
+    </p>
+  </div>
+
+  <div class="pied">
+    <p>Fait à Dakar, le {{ date_edition|date:"d F Y" }}</p>
+  </div>
+
+  <p class="numero">{{ demande.numero }}</p>
+</body>
+</html>

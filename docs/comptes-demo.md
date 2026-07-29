@@ -10,11 +10,11 @@ Mot de passe commun à tous les comptes : **`DemoDGAP2026!`**
 |---|---|---|---|
 | `demo.citoyen@administrationpenitentiaire.sn` | Citoyen | Non | Démarches publiques |
 | `demo.candidat@administrationpenitentiaire.sn` | Candidat concours | Non | Espace candidat (Bloc E) |
-| `demo.agent@administrationpenitentiaire.sn` | Agent pénitentiaire | Oui | Intranet (Bloc F) |
-| `demo.chef-etablissement@administrationpenitentiaire.sn` | Chef d'établissement | Oui | Instruction visites (Bloc D) + intranet |
-| `demo.redacteur@administrationpenitentiaire.sn` | Rédacteur éditorial | Oui | `contenus:rediger` — back-office |
+| `demo.agent@administrationpenitentiaire.sn` | Agent pénitentiaire | Oui | Intranet — lecture (Bloc F) |
+| `demo.chef-etablissement@administrationpenitentiaire.sn` | Chef d'établissement | Oui | Instruction visites (`visites:instruire/controler`) + intranet (`intranet:consulter/publier`) |
+| `demo.redacteur@administrationpenitentiaire.sn` | Rédacteur éditorial | Oui | `contenus:rediger` + `documents:gerer` + `boutique:gerer` — back-office |
 | `demo.valideur@administrationpenitentiaire.sn` | Valideur éditorial | Oui | `contenus:rediger` + `contenus:valider` — back-office |
-| `demo.administrateur@administrationpenitentiaire.sn` | Administrateur | Oui | `contenus:rediger/valider/publier` + `stats:lire` |
+| `demo.administrateur@administrationpenitentiaire.sn` | Administrateur | Oui | `est_superviseur_national` (tous les droits, cf. §Décisions d'architecture) |
 
 ## Comment se connecter
 

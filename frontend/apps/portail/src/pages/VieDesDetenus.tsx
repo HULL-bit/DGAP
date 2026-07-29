@@ -1,8 +1,11 @@
 import { Helmet } from 'react-helmet-async'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import { UserCheck, HeartPulse, Sun, Users, Mail, Package, BookOpen } from 'lucide-react'
-import { propsApparition, Carte } from '@dgap/ui'
+import { propsApparition, Carte, GalerieMedias } from '@dgap/ui'
+import { requeteApi } from '@dgap/api-client'
+import type { Galerie } from '../types/api'
 
 interface Rubrique {
   icone: LucideIcon
@@ -79,6 +82,12 @@ const rubriques: Rubrique[] = [
 ]
 
 export function VieDesDetenus() {
+  const { data: galerie } = useQuery({
+    queryKey: ['galerie', 'vie-detenus'],
+    queryFn: () => requeteApi<Galerie>('/galeries/vie-detenus'),
+    retry: false,
+  })
+
   return (
     <>
       <Helmet>
@@ -136,6 +145,17 @@ export function VieDesDetenus() {
           l'établissement ; se rapprocher du greffe concerné ou consulter la page « Vos démarches ».
         </p>
       </motion.section>
+
+      {galerie && galerie.medias.length > 0 && (
+        <motion.section className="bg-surface-tint dark:bg-surface-dark-alt" {...propsApparition()}>
+          <div className="mx-auto max-w-conteneur px-6 py-20 sm:px-8">
+            <h2 className="font-titre text-2xl font-bold text-text-strong dark:text-text-inv-strong">Galerie</h2>
+            <div className="mt-6">
+              <GalerieMedias medias={galerie.medias} />
+            </div>
+          </div>
+        </motion.section>
+      )}
     </>
   )
 }

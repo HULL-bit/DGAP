@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
-import { Download, Search } from 'lucide-react'
+import { Download, HelpCircle, Search } from 'lucide-react'
 import { requeteApi, ApiError } from '@dgap/api-client'
 import { ChampTexte, Bouton, propsApparition } from '@dgap/ui'
 import type { DemandeVisiteStatutPublique } from '../types/api'
@@ -25,6 +25,28 @@ export function VisiteSuivi() {
   const [enRecherche, setEnRecherche] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [demande, setDemande] = useState<DemandeVisiteStatutPublique | null>(null)
+
+  const [afficherRenvoi, setAfficherRenvoi] = useState(false)
+  const [emailRenvoi, setEmailRenvoi] = useState('')
+  const [enEnvoiRenvoi, setEnEnvoiRenvoi] = useState(false)
+  const [messageRenvoi, setMessageRenvoi] = useState<string | null>(null)
+
+  async function demanderRenvoi(e: FormEvent) {
+    e.preventDefault()
+    setEnEnvoiRenvoi(true)
+    setMessageRenvoi(null)
+    try {
+      const reponse = await requeteApi<{ detail: string }>('/demandes-visite/renvoi', {
+        method: 'POST',
+        body: JSON.stringify({ email: emailRenvoi }),
+      })
+      setMessageRenvoi(reponse.detail)
+    } catch {
+      setMessageRenvoi("La demande n'a pas pu être envoyée. Veuillez réessayer.")
+    } finally {
+      setEnEnvoiRenvoi(false)
+    }
+  }
 
   async function rechercher(e: FormEvent) {
     e.preventDefault()
@@ -96,6 +118,47 @@ export function VisiteSuivi() {
               {enRecherche ? 'Recherche en cours…' : 'Rechercher'}
             </Bouton>
           </form>
+
+          <div className="mt-4">
+            {!afficherRenvoi ? (
+              <button
+                type="button"
+                onClick={() => setAfficherRenvoi(true)}
+                className="inline-flex items-center gap-1.5 font-corps text-sm font-medium text-primary hover:underline dark:text-accent-soft"
+              >
+                <HelpCircle size={16} aria-hidden="true" />
+                J'ai oublié mon numéro ou mon code de suivi
+              </button>
+            ) : (
+              <div className="rounded-carte border border-border p-5 dark:border-border-dark">
+                <p className="font-corps text-sm text-text-strong dark:text-text-inv-strong">
+                  Recevoir un rappel par e-mail
+                </p>
+                <p className="mt-1 font-corps text-xs text-text-muted dark:text-text-inv-muted">
+                  Indiquez l'adresse e-mail utilisée lors du dépôt de votre demande. Si elle
+                  correspond à une ou plusieurs demandes, vous recevrez vos numéros et codes de
+                  suivi par e-mail.
+                </p>
+                <form onSubmit={demanderRenvoi} className="mt-3 flex flex-col gap-3" noValidate>
+                  <ChampTexte
+                    etiquette="Adresse e-mail"
+                    type="email"
+                    required
+                    value={emailRenvoi}
+                    onChange={(e) => setEmailRenvoi(e.target.value)}
+                  />
+                  <Bouton type="submit" taille="sm" variante="secondaire" disabled={enEnvoiRenvoi}>
+                    {enEnvoiRenvoi ? 'Envoi en cours…' : 'Envoyer le rappel'}
+                  </Bouton>
+                </form>
+                {messageRenvoi && (
+                  <p className="mt-3 font-corps text-sm text-text-body dark:text-text-inv-body">
+                    {messageRenvoi}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {demande && (
             <motion.div

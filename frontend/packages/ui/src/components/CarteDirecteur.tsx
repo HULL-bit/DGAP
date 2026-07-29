@@ -6,6 +6,11 @@ export interface CarteDirecteurProps {
   fonction: string
   email?: string
   telephone?: string
+  /** URL de la photo officielle — à défaut, avatar en initiales (§14.3 : jamais de
+   * photo générique/de banque d'images présentée comme une photo officielle). */
+  photo?: string
+  /** Courte présentation du profil (parcours, formation…), facultative. */
+  profil?: string
 }
 
 function initiales(nom: string): string {
@@ -19,10 +24,10 @@ function initiales(nom: string): string {
 }
 
 /**
- * Carte d'un directeur (central ou régional) — avatar en initiales (aucune photo
- * institutionnelle disponible en Phase 0, §14.3), nom, fonction, contacts directs.
+ * Carte d'un directeur (central ou régional) — photo officielle si fournie, sinon
+ * avatar en initiales (§14.3), nom, fonction, profil facultatif, contacts directs.
  */
-export function CarteDirecteur({ nom, fonction, email, telephone }: CarteDirecteurProps) {
+export function CarteDirecteur({ nom, fonction, email, telephone, photo, profil }: CarteDirecteurProps) {
   return (
     <motion.div
       className="flex flex-col gap-4 rounded-carte border border-border bg-white p-6 shadow-legere
@@ -31,15 +36,26 @@ export function CarteDirecteur({ nom, fonction, email, telephone }: CarteDirecte
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div
-        aria-hidden="true"
-        className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dark font-titre text-lg font-bold text-white"
-      >
-        {initiales(nom)}
-      </div>
+      {photo ? (
+        <img
+          src={photo}
+          alt=""
+          className="h-16 w-16 rounded-full object-cover"
+        />
+      ) : (
+        <div
+          aria-hidden="true"
+          className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-dark font-titre text-lg font-bold text-white"
+        >
+          {initiales(nom)}
+        </div>
+      )}
       <div>
         <p className="font-titre text-base font-semibold text-text-strong dark:text-text-inv-strong">{nom}</p>
         <p className="mt-1 font-corps text-sm text-text-muted dark:text-text-inv-muted">{fonction}</p>
+        {profil && (
+          <p className="mt-2 font-corps text-sm leading-relaxed text-text-body dark:text-text-inv-body">{profil}</p>
+        )}
       </div>
       <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4 dark:border-border-dark">
         {email && (

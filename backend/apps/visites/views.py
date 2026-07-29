@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
@@ -9,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.audit.models import Action, JournalAction
+from apps.notifications.services import notifier
 from core.pagination import PaginationParCurseur
 from core.permissions import MFAConfirmee
 from core.qr_signe import verifier_charge
@@ -22,9 +25,16 @@ from .serializers import (
     DemandeVisiteInstructionSerializer,
     DemandeVisiteStatutPubliqueSerializer,
     PieceJointeVisiteSerializer,
+    RenvoiSuiviReponseSerializer,
+    RenvoiSuiviSerializer,
     TransitionVisiteSerializer,
     VerificationPermisReponseSerializer,
     VerificationPermisSerializer,
+)
+
+MESSAGE_RENVOI_GENERIQUE = (
+    "Si une ou plusieurs demandes correspondent à cet e-mail, un message vient de vous "
+    "être envoyé avec vos numéros et codes de suivi."
 )
 
 
@@ -54,6 +64,19 @@ class DemandeVisiteCreationView(APIView):
         serializer = DemandeVisiteCreationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         demande = serializer.save(cle_idempotence=cle_idempotence or None)
+
+        notifier(
+            email=demande.visiteur_email,
+            telephone=demande.visiteur_telephone,
+            sujet=f"Confirmation de votre demande de visite {demande.numero_suivi} — DGAP",
+            contenu=(
+                "Bonjour,\n\nVotre demande de visite a été enregistrée sous le numéro "
+                f"{demande.numero_suivi} (code : {demande.code_suivi}).\n\n"
+                "Conservez ces informations pour suivre l'état de votre dossier.\n\n"
+                "Ce message est envoyé automatiquement, merci de ne pas y répondre."
+            ),
+            objet_source=demande,
+        )
 
         JournalAction.tracer(
             acteur=request.user,
@@ -96,6 +119,51 @@ class DemandeVisiteStatutView(APIView):
         code = request.query_params.get("code", "")
         demande = get_object_or_404(DemandeVisite, numero_suivi=numero_suivi, code_suivi=code)
         return Response(DemandeVisiteStatutPubliqueSerializer(demande).data)
+
+
+class RenvoiSuiviView(APIView):
+    """POST /api/v1/demandes-visite/renvoi — un citoyen ayant perdu son numéro ou son
+    code de suivi les reçoit par e-mail (§6.2).
+
+    Réponse volontairement identique qu'une correspondance existe ou non, pour ne pas
+    laisser deviner si une adresse a déposé une demande (énumération)."""
+
+    permission_classes = [AllowAny]
+    throttle_scope = "renvoi-suivi"
+
+    @extend_schema(request=RenvoiSuiviSerializer, responses=RenvoiSuiviReponseSerializer)
+    def post(self, request):
+        serializer = RenvoiSuiviSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+
+        demandes = (
+            DemandeVisite.objets.select_related("etablissement")
+            .filter(visiteur_email__iexact=email)
+            .order_by("-cree_le")[:10]
+        )
+        if demandes:
+            lignes = "\n".join(
+                f"- {d.numero_suivi} (code : {d.code_suivi}) — {d.etablissement.nom}"
+                for d in demandes
+            )
+            send_mail(
+                subject="Vos demandes de visite — DGAP",
+                message=(
+                    "Bonjour,\n\n"
+                    "Voici le rappel de vos demandes de visite déposées auprès de "
+                    "l'Administration Pénitentiaire :\n\n"
+                    f"{lignes}\n\n"
+                    "Utilisez le numéro et le code correspondants sur la page de suivi "
+                    "pour consulter l'état de votre demande.\n\n"
+                    "Ce message est envoyé automatiquement, merci de ne pas y répondre."
+                ),
+                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                recipient_list=[email],
+                fail_silently=True,
+            )
+
+        return Response({"detail": MESSAGE_RENVOI_GENERIQUE})
 
 
 class DemandeVisiteInstructionListView(ListAPIView):

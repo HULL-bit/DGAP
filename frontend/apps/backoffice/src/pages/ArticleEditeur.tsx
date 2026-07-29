@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ArrowLeft, History, RotateCcw } from 'lucide-react'
-import { requeteApi, ApiError } from '@dgap/api-client'
+import { ArrowLeft, History, RotateCcw, Trash2, Upload } from 'lucide-react'
+import { requeteApi, requeteApiFichier, ApiError } from '@dgap/api-client'
 import { Badge, Bouton, ChampTexte, Carte, propsApparition, type TonBadge } from '@dgap/ui'
 import { useAuth } from '../auth/AuthContext'
-import type { ArticleBackoffice, StatutContenu, VersionContenu } from '../types/api'
+import type { ArticleBackoffice, Galerie, Pagination, StatutContenu, VersionContenu } from '../types/api'
 import { ACTIONS_PAR_STATUT, LIBELLES_STATUT } from '../types/api'
 
 const TON_PAR_STATUT: Record<StatutContenu, TonBadge> = {
@@ -48,11 +48,19 @@ export function ArticleEditeur() {
   const [erreurs, setErreurs] = useState<Partial<Record<keyof Formulaire, string>>>({})
   const [enregistrement, setEnregistrement] = useState(false)
   const [messageAction, setMessageAction] = useState<string | null>(null)
+  const [galerieId, setGalerieId] = useState('')
+  const [enTeleversementImage, setEnTeleversementImage] = useState(false)
+  const [erreurImage, setErreurImage] = useState<string | null>(null)
 
   const { data: article, isLoading } = useQuery({
     queryKey: ['backoffice-article', id],
     queryFn: () => requeteApi<ArticleBackoffice>(`/backoffice/articles/${id}`),
     enabled: !estNouveau,
+  })
+
+  const { data: galeries } = useQuery({
+    queryKey: ['backoffice-galeries'],
+    queryFn: () => requeteApi<Pagination<Galerie>>('/backoffice/galeries'),
   })
 
   const { data: versions, refetch: refetchVersions } = useQuery({
@@ -71,6 +79,7 @@ export function ArticleEditeur() {
         meta_titre: article.meta_titre,
         meta_description: article.meta_description,
       })
+      setGalerieId(article.galerie ?? '')
     }
   }, [article])
 
@@ -84,14 +93,15 @@ export function ArticleEditeur() {
     setEnregistrement(true)
     setErreurs({})
     try {
+      const charge = { ...champs, galerie: galerieId || null }
       if (estNouveau) {
         const cree = await requeteApi<ArticleBackoffice>('/backoffice/articles', {
           method: 'POST',
-          body: JSON.stringify(champs),
+          body: JSON.stringify(charge),
         })
         navigate(`/articles/${cree.id}`, { replace: true })
       } else {
-        await requeteApi(`/backoffice/articles/${id}`, { method: 'PATCH', body: JSON.stringify(champs) })
+        await requeteApi(`/backoffice/articles/${id}`, { method: 'PATCH', body: JSON.stringify(charge) })
         await queryClient.invalidateQueries({ queryKey: ['backoffice-article', id] })
         await refetchVersions()
         setMessageAction('Modifications enregistrées.')
@@ -107,6 +117,33 @@ export function ArticleEditeur() {
     } finally {
       setEnregistrement(false)
     }
+  }
+
+  async function televerserImage(e: ChangeEvent<HTMLInputElement>) {
+    const fichier = e.target.files?.[0]
+    e.target.value = ''
+    if (!fichier || estNouveau) return
+    setErreurImage(null)
+    setEnTeleversementImage(true)
+    try {
+      const donnees = new FormData()
+      donnees.append('image', fichier)
+      await requeteApiFichier(`/backoffice/articles/${id}/image`, donnees)
+      await queryClient.invalidateQueries({ queryKey: ['backoffice-article', id] })
+    } catch (err) {
+      setErreurImage(
+        err instanceof ApiError
+          ? (err.probleme.erreurs_champs?.image?.[0] ?? err.probleme.detail ?? "L'image n'a pas pu être envoyée.")
+          : "L'image n'a pas pu être envoyée.",
+      )
+    } finally {
+      setEnTeleversementImage(false)
+    }
+  }
+
+  async function supprimerImage() {
+    await requeteApi(`/backoffice/articles/${id}/image`, { method: 'DELETE' })
+    await queryClient.invalidateQueries({ queryKey: ['backoffice-article', id] })
   }
 
   async function appliquerTransition(action: string) {
@@ -174,6 +211,46 @@ export function ArticleEditeur() {
               erreur={erreurs.chapo}
             />
             <div className="flex flex-col gap-1.5">
+              <span className="font-corps text-sm font-medium text-text-strong dark:text-text-inv-strong">
+                Image à la une
+              </span>
+              {article?.image_url && (
+                <div className="relative w-full max-w-xs overflow-hidden rounded-carte border border-border dark:border-border-dark">
+                  <img src={article.image_url} alt="" className="aspect-video w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={supprimerImage}
+                    aria-label="Supprimer l'image à la une"
+                    className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-error"
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                  </button>
+                </div>
+              )}
+              {estNouveau ? (
+                <p className="font-corps text-xs text-text-muted dark:text-text-inv-muted">
+                  Enregistrez d'abord l'article pour pouvoir y ajouter une image.
+                </p>
+              ) : (
+                <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-bouton border border-border px-3 py-2 font-corps text-sm font-medium text-text-strong hover:bg-surface-tint dark:border-border-dark dark:text-text-inv-strong dark:hover:bg-white/5">
+                  <Upload size={16} aria-hidden="true" />
+                  {enTeleversementImage ? 'Envoi en cours…' : article?.image_url ? 'Changer' : 'Téléverser une image'}
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    onChange={televerserImage}
+                    disabled={enTeleversementImage}
+                    className="sr-only"
+                  />
+                </label>
+              )}
+              {erreurImage && (
+                <span role="alert" className="font-corps text-sm text-error">
+                  {erreurImage}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
               <label htmlFor="contenu" className="font-corps text-sm font-medium text-text-strong dark:text-text-inv-strong">
                 Contenu
               </label>
@@ -186,6 +263,32 @@ export function ArticleEditeur() {
                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
                            dark:border-border-dark dark:bg-white/5 dark:text-text-inv-body"
               />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="galerie" className="font-corps text-sm font-medium text-text-strong dark:text-text-inv-strong">
+                Galerie associée (images/vidéos complémentaires)
+              </label>
+              <select
+                id="galerie"
+                value={galerieId}
+                onChange={(e) => setGalerieId(e.target.value)}
+                className="min-h-[44px] rounded-bouton border border-border bg-white px-3 py-2 font-corps text-base text-text-body
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+                           dark:border-border-dark dark:bg-white/5 dark:text-text-inv-body"
+              >
+                <option value="">Aucune</option>
+                {galeries?.results.map((galerie) => (
+                  <option key={galerie.id} value={galerie.id}>
+                    {galerie.titre}
+                  </option>
+                ))}
+              </select>
+              <Link
+                to="/galeries"
+                className="self-start font-corps text-xs font-medium text-primary hover:underline dark:text-accent-soft"
+              >
+                Gérer les galeries
+              </Link>
             </div>
             <ChampTexte
               etiquette="Méta-titre (SEO)"

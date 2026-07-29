@@ -159,6 +159,10 @@ class ContenuEditorial(ModeleAvecSuppressionLogique):
         )
 
 
+def chemin_image_article(instance: Article, nom_fichier: str) -> str:
+    return f"articles/{instance.id}/{nom_fichier}"
+
+
 class Article(ContenuEditorial):
     titre = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True)
@@ -168,13 +172,23 @@ class Article(ContenuEditorial):
         Rubrique, on_delete=models.SET_NULL, null=True, blank=True, related_name="articles"
     )
     date_publication = models.DateTimeField(null=True, blank=True)
-    image_url = models.URLField(
-        blank=True, help_text="Placeholder — médiathèque MinIO au Bloc B/C."
+    #: Fichier réel (MinIO) — l'URL exposée par l'API (`image_url`) est calculée à la
+    #: lecture (`.image.url`, presignée) plutôt que stockée : une URL S3 pré-signée
+    #: expire (`Expires=...`), la persister finirait par rendre l'image inaccessible
+    #: silencieusement sans qu'aucune donnée n'ait changé.
+    image = models.ImageField(upload_to=chemin_image_article, blank=True)
+    galerie = models.ForeignKey(
+        "mediatheque.Galerie",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="articles",
+        help_text="Galerie d'images/vidéos complémentaires affichée sous l'article.",
     )
     meta_titre = models.CharField(max_length=200, blank=True)
     meta_description = models.CharField(max_length=300, blank=True)
 
-    champs_versionnes = ("titre", "chapo", "contenu", "meta_titre", "meta_description", "image_url")
+    champs_versionnes = ("titre", "chapo", "contenu", "meta_titre", "meta_description")
 
     class Meta:
         db_table = "articles"

@@ -33,6 +33,11 @@ export type { CarrouselMediaProps, Diapositive, FondDiapositive } from './compon
 export { CarteDirecteur } from './components/CarteDirecteur'
 export type { CarteDirecteurProps } from './components/CarteDirecteur'
 
+export { GalerieMedias } from './components/GalerieMedias'
+export type { GalerieMediasProps, MediaGalerieAffiche } from './components/GalerieMedias'
+
+export { urlIncorporationVideo } from './utils/video'
+
 export { ThemeProvider, useTheme } from './theme/ThemeProvider'
 export type { Theme } from './theme/ThemeProvider'
 

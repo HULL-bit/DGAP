@@ -9,6 +9,7 @@ from .views import (
     PermisPDFParNumeroView,
     PermisPDFView,
     PieceJointeCreationView,
+    RenvoiSuiviView,
     VerificationPermisView,
 )
 
@@ -36,6 +37,7 @@ urlpatterns = [
         DemandeVisiteStatutView.as_view(),
         name="statut",
     ),
+    path("demandes-visite/renvoi", RenvoiSuiviView.as_view(), name="renvoi-suivi"),
     path(
         "demandes-visite/<str:numero_suivi>/permis/pdf",
         PermisPDFParNumeroView.as_view(),

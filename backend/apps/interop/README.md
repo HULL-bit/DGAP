@@ -1,7 +1,9 @@
 # apps.interop
 
-Interopérabilité justice/paiement/SMS (M14) — Bloc G.
+Interconnexion (M14) — Bloc G, jamais exposé côté public.
 
-**Non implémenté en Phase 0** — dossier de scaffolding (migrations/, apps.py) prêt à
-recevoir modèles, migrations, sérialiseurs et vues lors du bloc indiqué ci-dessus.
-Cette app n'est volontairement pas ajoutée à `INSTALLED_APPS` tant qu'elle est vide.
+Voir le docstring de `apps/interop/models.py` pour le détail de ce qui est
+livré (EF-1401 : journal des échanges externes ; EF-1404, volet rapprochement
+automatique sur le grand livre mock d'`apps.paiements`) et de ce qui est hors
+périmètre (EF-1402, EF-1403, EF-1404 volet passerelle réelle, EF-1405 — déjà
+couvert par `apps.notifications`, EF-1406).

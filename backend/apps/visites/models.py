@@ -54,6 +54,18 @@ SCOPE_PAR_ACTION: dict[str, str] = {
     "delivrer_permis": "visites:instruire",
 }
 
+# Phrase insérée dans la notification envoyée à chaque changement d'état (EF-302) —
+# pas de notification pour SOUMISE (couverte par l'accusé de réception au dépôt).
+MESSAGES_PAR_STATUT: dict[str, str] = {
+    StatutDemandeVisite.EN_INSTRUCTION: "est en cours d'instruction",
+    StatutDemandeVisite.PIECES_MANQUANTES: (
+        "nécessite des pièces complémentaires — contactez l'établissement"
+    ),
+    StatutDemandeVisite.VALIDEE: "a été validée",
+    StatutDemandeVisite.REJETEE: "a été rejetée",
+    StatutDemandeVisite.PERMIS_DELIVRE: "a été acceptée : le permis de visite est disponible",
+}
+
 
 class TransitionInvalide(Exception):
     def __init__(self, statut_actuel: str, action: str):
@@ -162,6 +174,31 @@ class DemandeVisite(ModeleAvecSuppressionLogique):
         if action == "rejeter":
             self.motif_rejet = motif
         self.save()
+        self._notifier_changement_statut()
+
+    def _notifier_changement_statut(self) -> None:
+        from apps.notifications.services import notifier
+
+        phrase = MESSAGES_PAR_STATUT.get(self.statut)
+        if not phrase:
+            return
+        motif = (
+            f"Motif : {self.motif_rejet}\n\n"
+            if self.statut == StatutDemandeVisite.REJETEE and self.motif_rejet
+            else ""
+        )
+        notifier(
+            email=self.visiteur_email,
+            telephone=self.visiteur_telephone,
+            sujet=f"Votre demande de visite {self.numero_suivi} — DGAP",
+            contenu=(
+                f"Bonjour,\n\nVotre demande de visite {self.numero_suivi} {phrase}.\n\n"
+                f"{motif}"
+                "Consultez le détail sur la page de suivi avec votre numéro et votre code.\n\n"
+                "Ce message est envoyé automatiquement, merci de ne pas y répondre."
+            ),
+            objet_source=self,
+        )
 
 
 class TypePieceVisite(models.TextChoices):

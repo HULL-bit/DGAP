@@ -45,6 +45,13 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         help_text="Bypass des vérifications de périmètre (direction générale, audit).",
     )
     mfa_active = models.BooleanField(default=False)
+    compte_demonstration = models.BooleanField(
+        default=False,
+        help_text=(
+            "Compte de démonstration (script de seed) : dispensé du MFA pour rester "
+            "utilisable immédiatement par login/mot de passe. Jamais vrai en production."
+        ),
+    )
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -71,7 +78,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
 
     @property
     def mfa_requis(self) -> bool:
-        return self.est_agent_interne
+        return self.est_agent_interne and not self.compte_demonstration
 
     def scopes(self) -> set[str]:
         """Codes de permission effectifs : rôles actifs ∪ attributions directes actives."""
@@ -177,7 +184,7 @@ class AffectationRole(ModeleBase):
         help_text="Vide = portée nationale (réservé aux rôles habilités).",
     )
     actif = models.BooleanField(default=True)
-    date_debut = models.DateField(default=timezone.now)
+    date_debut = models.DateField(default=timezone.localdate)
     date_fin = models.DateField(null=True, blank=True)
 
     class Meta:
@@ -219,7 +226,7 @@ class AttributionPermission(ModeleBase):
         max_length=255, blank=True, help_text="Raison de l'exception (traçabilité)."
     )
     actif = models.BooleanField(default=True)
-    date_debut = models.DateField(default=timezone.now)
+    date_debut = models.DateField(default=timezone.localdate)
     date_fin = models.DateField(null=True, blank=True)
 
     class Meta:

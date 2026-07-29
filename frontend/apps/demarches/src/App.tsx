@@ -3,13 +3,16 @@ import { EnTeteEtat, PiedDePage } from '@dgap/ui'
 import { Accueil } from './pages/Accueil'
 import { VisiteNouvelle } from './pages/VisiteNouvelle'
 import { VisiteSuivi } from './pages/VisiteSuivi'
+import { ConcoursOuverts } from './pages/ConcoursOuverts'
+import { CandidatureNouvelle } from './pages/CandidatureNouvelle'
+import { CandidatureSuivi } from './pages/CandidatureSuivi'
 
 const liensNav = [
   { libelle: 'Accueil', href: '/' },
   { libelle: 'Demande de visite', href: '/visites/nouvelle' },
   { libelle: 'Suivi de demande', href: '/visites/suivi' },
   { libelle: 'Concours', href: '/concours' },
-  { libelle: 'Espace candidat', href: '/candidat' },
+  { libelle: 'Suivi candidature', href: '/concours/suivi' },
 ]
 
 export function App() {
@@ -30,6 +33,9 @@ export function App() {
           <Route path="/" element={<Accueil />} />
           <Route path="/visites/nouvelle" element={<VisiteNouvelle />} />
           <Route path="/visites/suivi" element={<VisiteSuivi />} />
+          <Route path="/concours" element={<ConcoursOuverts />} />
+          <Route path="/concours/suivi" element={<CandidatureSuivi />} />
+          <Route path="/concours/:code/inscription" element={<CandidatureNouvelle />} />
         </Routes>
       </main>
       <PiedDePage />

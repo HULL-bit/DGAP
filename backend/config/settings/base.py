@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     # Tiers
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "corsheaders",
     "drf_spectacular",
@@ -41,9 +42,39 @@ INSTALLED_APPS = [
     "apps.mediatheque",
     # Bloc D — téléservice Visites (Phase 3)
     "apps.visites",
-    # Apps métier restantes — activées au fil des lots (§4.3). Volontairement absentes
-    # tant que leurs modèles ne sont pas livrés : `apps.detenus` ne doit JAMAIS être
-    # routée côté public (§6.3) et sera montée dans une configuration réseau cloisonnée.
+    # Bloc E — téléservice Concours (Phase 4)
+    "apps.paiements",
+    "apps.concours",
+    # Vitrine des produits des ateliers de réinsertion (catalogue de présentation
+    # uniquement, aucun panier/paiement — décision produit)
+    "apps.boutique",
+    # Bloc F — Portail agents (M7) : tableau de bord personnel, notes de service
+    "apps.intranet",
+    # Bloc F — Statistiques (M11) : tableaux de bord thématiques (visites, concours)
+    "apps.statistiques",
+    # Bloc G — Notifications (M14, EF-1405) : hookées dans apps.visites/apps.concours
+    "apps.notifications",
+    # Bloc G — Gestion électronique du courrier (M5) : jamais exposée côté public
+    "apps.courrier",
+    # Bloc G — Gestion électronique de documents (M6) : OCR réel (Tesseract), jamais
+    # exposée côté public
+    "apps.ged",
+    # Bloc G — Ressources humaines (M8) + reste des demandes internes (M7) : jamais
+    # exposées côté public
+    "apps.rh",
+    # Bloc G — Dossier numérique de la personne détenue (M10) : données les plus
+    # sensibles du système, jamais routées côté public (§6.3). L'isolement réseau
+    # réel (VLAN/segment dédié) est une décision d'infrastructure de déploiement,
+    # non exprimable dans ce socle Docker Compose de développement — voir le
+    # docstring d'`apps.detenus.models` pour l'isolement applicatif effectivement
+    # construit (jamais de route publique, RBAC par périmètre, chiffrement
+    # applicatif de l'identité, journalisation intégrale des consultations).
+    "apps.detenus",
+    # Bloc G — Interconnexion (M14) : journal des échanges externes (EF-1401) et
+    # rapprochement des paiements (EF-1404) — le reste (chaîne judiciaire, forces
+    # de sécurité, plateformes gouvernementales) suppose des contreparties
+    # externes réelles hors périmètre.
+    "apps.interop",
 ]
 
 MIDDLEWARE = [
@@ -138,6 +169,7 @@ STORAGES = {
             "region_name": config("MINIO_REGION", default="us-east-1"),
             "default_acl": "private",
             "file_overwrite": False,
+            "verify": config("MINIO_VERIFY_SSL", default=True, cast=bool),
         },
     },
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
@@ -161,8 +193,13 @@ REST_FRAMEWORK = {
         "auth": "10/min",
         "depot-demande": "20/min",
         "suivi-demande": "30/min",
+        "renvoi-suivi": "5/hour",
     },
 }
+
+DEFAULT_FROM_EMAIL = config(
+    "DEFAULT_FROM_EMAIL", default="ne-pas-repondre@administrationpenitentiaire.sn"
+)
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
@@ -176,6 +213,14 @@ SIMPLE_JWT = {
 # Clé de signature des charges QR (permis de visite, convocations — §10). Dédiée et
 # distincte de SECRET_KEY ; à défaut (dev), on retombe sur SECRET_KEY (core.qr_signe).
 QR_SIGNING_KEY = config("QR_SIGNING_KEY", default="")
+
+# Clé de chiffrement applicatif AES-256-GCM (identité des personnes détenues, §9.3,
+# apps.detenus) — 32 octets encodés en base64. Valeur de dev ci-dessous **non
+# sécurisée** (générée une fois, partagée dans le dépôt) : à remplacer impérativement
+# par une valeur secrète propre à chaque environnement réel (core.chiffrement).
+CLE_CHIFFREMENT_DONNEES = config(
+    "CLE_CHIFFREMENT_DONNEES", default="c2VjcmV0LWRldi11bmlxdWVtZW50LTMyLW9jdGV0cyE="
+)
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "API DGAP",
@@ -192,6 +237,24 @@ SPECTACULAR_SETTINGS = {
         "StatutContactEnum": "apps.demarches.models.StatutContact",
         "StatutDocumentEnum": "apps.mediatheque.models.StatutDocument",
         "StatutDemandeVisiteEnum": "apps.visites.models.StatutDemandeVisite",
+        "TypeMediaEnum": "apps.mediatheque.models.TypeMedia",
+        "TypePerimetreEnum": "apps.comptes.models.Perimetre.TypePerimetre",
+        "StatutConcoursEnum": "apps.concours.models.StatutConcours",
+        "StatutCandidatureEnum": "apps.concours.models.StatutCandidature",
+        "StatutPaiementEnum": "apps.paiements.models.StatutPaiement",
+        "TypePieceVisiteEnum": "apps.visites.models.TypePieceVisite",
+        "TypePieceCandidatureEnum": "apps.concours.models.TypePieceCandidature",
+        # Valeurs identiques dans apps.visites et apps.concours (même concept de
+        # contrôle de pièce jointe) — drf-spectacular les traite comme un seul et
+        # même jeu de choix ; un seul nom d'override est possible pour les deux.
+        "StatutControlePieceEnum": "apps.visites.models.StatutControlePiece",
+        "NiveauConfidentialiteEnum": "apps.courrier.models.NiveauConfidentialite",
+        "StatutCourrierEntrantEnum": "apps.courrier.models.StatutCourrierEntrant",
+        "StatutReponseCourrierEnum": "apps.courrier.models.StatutReponse",
+        "StatutCourrierSortantEnum": "apps.courrier.models.StatutCourrierSortant",
+        "NatureDocumentEnum": "apps.mediatheque.models.NatureDocument",
+        "NatureDocumentGedEnum": "apps.ged.models.NatureDocumentGed",
+        "StatutEchangeExterneEnum": "apps.interop.models.StatutEchange",
     },
 }
 

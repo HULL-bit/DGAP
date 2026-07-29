@@ -18,6 +18,10 @@ const ReinsertionCategorie = lazy(() =>
 const Annuaire = lazy(() => import('./pages/Annuaire').then((m) => ({ default: m.Annuaire })))
 const Actualites = lazy(() => import('./pages/Actualites').then((m) => ({ default: m.Actualites })))
 const ArticleDetail = lazy(() => import('./pages/ArticleDetail').then((m) => ({ default: m.ArticleDetail })))
+const DocumentsOfficiels = lazy(() =>
+  import('./pages/DocumentsOfficiels').then((m) => ({ default: m.DocumentsOfficiels })),
+)
+const Boutique = lazy(() => import('./pages/Boutique').then((m) => ({ default: m.Boutique })))
 const Contact = lazy(() => import('./pages/Contact').then((m) => ({ default: m.Contact })))
 const FaqPage = lazy(() => import('./pages/FaqPage').then((m) => ({ default: m.FaqPage })))
 
@@ -39,6 +43,8 @@ export function App() {
     { libelle: t('nav.vieDesDetenus'), href: '/vie-des-detenus' },
     { libelle: t('nav.actualites'), href: '/actualite' },
     { libelle: t('nav.reinsertion'), href: '/reinsertion' },
+    { libelle: t('nav.publications'), href: '/publications' },
+    { libelle: t('nav.boutique'), href: '/boutique' },
     { libelle: t('nav.annuaire'), href: '/annuaire' },
     { libelle: t('nav.faq'), href: '/faq' },
     { libelle: t('nav.contact'), href: '/contact' },
@@ -73,6 +79,8 @@ export function App() {
             <Route path="/annuaire" element={<Annuaire />} />
             <Route path="/actualite" element={<Actualites />} />
             <Route path="/actualite/:slug" element={<ArticleDetail />} />
+            <Route path="/publications" element={<DocumentsOfficiels />} />
+            <Route path="/boutique" element={<Boutique />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<FaqPage />} />
           </Routes>

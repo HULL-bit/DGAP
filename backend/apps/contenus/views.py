@@ -1,5 +1,5 @@
 from drf_spectacular.utils import extend_schema
-from rest_framework import status, viewsets
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny
@@ -20,6 +20,24 @@ from .serializers import (
     TransitionSerializer,
     VersionContenuSerializer,
 )
+
+EXTENSIONS_IMAGE_AUTORISEES = (".jpg", ".jpeg", ".png", ".webp")
+TAILLE_IMAGE_MAX_OCTETS = 8 * 1024 * 1024
+
+
+class ImageArticleUploadSerializer(serializers.Serializer):
+    image = serializers.ImageField()
+
+    def validate_image(self, valeur):
+        if not valeur.name.lower().endswith(EXTENSIONS_IMAGE_AUTORISEES):
+            raise serializers.ValidationError("Formats acceptés : JPG, PNG, WEBP.")
+        if valeur.size > TAILLE_IMAGE_MAX_OCTETS:
+            raise serializers.ValidationError("Fichier trop volumineux (max 8 Mo).")
+        return valeur
+
+
+class ImageArticleReponseSerializer(serializers.Serializer):
+    image_url = serializers.CharField()
 
 
 class ArticleListView(ListAPIView):
@@ -162,6 +180,44 @@ class ArticleBackofficeViewSet(ContenuEditorialViewSetMixin, viewsets.ModelViewS
 
     queryset = Article.tous_les_objets.select_related("rubrique").all()
     serializer_class = ArticleBackofficeSerializer
+
+    @extend_schema(request=ImageArticleUploadSerializer, responses=ImageArticleReponseSerializer)
+    @action(detail=True, methods=["post", "delete"], url_path="image")
+    def televerser_image(self, request, pk=None):
+        """POST .../{id}/image — téléverse l'image à la une. DELETE .../{id}/image —
+        la retire. `image` est un `ImageField` réel (jamais un `image_url` stocké en
+        base) : l'URL exposée par l'API est presignée à la lecture, jamais persistée."""
+        article = self.get_object()
+
+        if request.method == "DELETE":
+            article.image.delete(save=False)
+            article.modifie_par = request.user
+            article.save(update_fields=["image", "modifie_par", "modifie_le"])
+            JournalAction.tracer(
+                acteur=request.user,
+                action=Action.MODIFIER,
+                ressource_type=article._meta.db_table,
+                ressource_id=str(article.pk),
+                requete=request,
+                detail={"image_supprimee": True},
+            )
+            return Response({"image_url": ""})
+
+        serializer = ImageArticleUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        article.image = serializer.validated_data["image"]
+        article.modifie_par = request.user
+        article.save(update_fields=["image", "modifie_par", "modifie_le"])
+
+        JournalAction.tracer(
+            acteur=request.user,
+            action=Action.MODIFIER,
+            ressource_type=article._meta.db_table,
+            ressource_id=str(article.pk),
+            requete=request,
+            detail={"image_televersee": True},
+        )
+        return Response({"image_url": article.image.url}, status=status.HTTP_201_CREATED)
 
 
 class PageBackofficeViewSet(ContenuEditorialViewSetMixin, viewsets.ModelViewSet):

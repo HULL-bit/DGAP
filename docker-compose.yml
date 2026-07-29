@@ -15,7 +15,11 @@ x-backend-env: &backend-env
     POSTGRES_HOST: db
     POSTGRES_PORT: "5432"
     REDIS_URL: redis://redis:6379/0
-    MINIO_ENDPOINT_URL: http://minio:9000
+    # Signé et résolu sous le même nom d'hôte que celui vu par le navigateur
+    # (storage.localhost, proxié par nginx vers minio:9000) — indispensable pour
+    # que les URLs S3 pré-signées restent valides une fois sorties du réseau Docker
+    # (permis PDF, pièces jointes visites, médias de galerie). Voir nginx/conf.d/storage.conf.
+    MINIO_ENDPOINT_URL: https://storage.localhost
     MINIO_ACCESS_KEY: dgap
     MINIO_SECRET_KEY: dgap-dev-secret
     MINIO_BUCKET: dgap-medias
@@ -71,6 +75,17 @@ services:
     ports:
       - "8025:8025" # IHM de consultation des e-mails de test
 
+  # Provisionne le bucket applicatif (§ stockage objet) — sans cela, tout FileField
+  # (pièces jointes visites, médiathèque) échoue en 500 (NoSuchBucket) sur un volume
+  # minio_data fraîchement créé.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio: { condition: service_healthy }
+    entrypoint: >
+      sh -c "mc alias set local http://minio:9000 dgap dgap-dev-secret &&
+             mc mb --ignore-existing local/dgap-medias"
+
   backend:
     build: ./backend
     <<: *backend-env
@@ -85,6 +100,13 @@ services:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }
       minio: { condition: service_healthy }
+      minio-init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/sante/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   worker:
     build: ./backend
@@ -114,6 +136,7 @@ services:
     environment:
       VITE_API_BASE_URL: /api/v1
       VITE_DEMARCHES_URL: https://demarches.localhost
+      VITE_BACKOFFICE_URL: https://admin.localhost
       CI: "true"
     command: >
       sh -c "corepack enable &&
@@ -135,9 +158,16 @@ services:
       - ./frontend/apps/demarches/dist:/usr/share/nginx/html/demarches:ro
       - ./frontend/apps/intranet/dist:/usr/share/nginx/html/intranet:ro
       - ./frontend/apps/backoffice/dist:/usr/share/nginx/html/backoffice:ro
+    networks:
+      default:
+        # Alias supplémentaire : permet au backend de résoudre storage.localhost
+        # au sein du réseau Docker (même nom d'hôte que celui vu par le navigateur,
+        # requis pour que les URLs S3 pré-signées restent valides — voir storage.conf).
+        aliases:
+          - storage.localhost
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
       frontend-build:
         condition: service_completed_successfully
 

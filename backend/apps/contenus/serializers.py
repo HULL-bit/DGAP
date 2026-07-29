@@ -12,15 +12,23 @@ class RubriqueSerializer(serializers.ModelSerializer):
 
 class ArticleListeSerializer(serializers.ModelSerializer):
     rubrique = RubriqueSerializer(read_only=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
         fields = ["id", "titre", "slug", "chapo", "rubrique", "date_publication", "image_url"]
         read_only_fields = fields
 
+    def get_image_url(self, obj: Article) -> str:
+        return obj.image.url if obj.image else ""
+
 
 class ArticleDetailSerializer(serializers.ModelSerializer):
     rubrique = RubriqueSerializer(read_only=True)
+    galerie_code: serializers.SlugRelatedField = serializers.SlugRelatedField(
+        source="galerie", slug_field="code", read_only=True
+    )
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
@@ -33,10 +41,14 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
             "rubrique",
             "date_publication",
             "image_url",
+            "galerie_code",
             "meta_titre",
             "meta_description",
         ]
         read_only_fields = fields
+
+    def get_image_url(self, obj: Article) -> str:
+        return obj.image.url if obj.image else ""
 
 
 class PageDetailSerializer(serializers.ModelSerializer):
@@ -52,7 +64,12 @@ class PageDetailSerializer(serializers.ModelSerializer):
 
 
 class ArticleBackofficeSerializer(serializers.ModelSerializer):
-    """CRUD éditorial complet — auteur/dates en lecture seule, reste modifiable."""
+    """CRUD éditorial complet — auteur/dates en lecture seule, reste modifiable.
+
+    `image_url` est calculée (jamais stockée telle quelle) : voir `Article.image` et
+    `ArticleBackofficeViewSet.televerser_image`."""
+
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
@@ -66,12 +83,23 @@ class ArticleBackofficeSerializer(serializers.ModelSerializer):
             "rubrique",
             "date_publication",
             "image_url",
+            "galerie",
             "meta_titre",
             "meta_description",
             "cree_le",
             "modifie_le",
         ]
-        read_only_fields = ["id", "statut", "date_publication", "cree_le", "modifie_le"]
+        read_only_fields = [
+            "id",
+            "statut",
+            "date_publication",
+            "image_url",
+            "cree_le",
+            "modifie_le",
+        ]
+
+    def get_image_url(self, obj: Article) -> str:
+        return obj.image.url if obj.image else ""
 
 
 class PageBackofficeSerializer(serializers.ModelSerializer):

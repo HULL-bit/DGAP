@@ -50,8 +50,12 @@ async function rafraichirSession(): Promise<boolean> {
           effacerJetons()
           return false
         }
-        const donnees = (await reponse.json()) as { access: string }
-        definirJetons({ access: donnees.access })
+        // `ROTATE_REFRESH_TOKENS=True` côté backend (SIMPLE_JWT) : chaque
+        // rafraîchissement invalide l'ancien refresh token et en émet un nouveau.
+        // Ne pas le persister ici ferait échouer le rafraîchissement suivant (token
+        // devenu invalide) et déconnecterait l'agent bien avant les 24h prévues.
+        const donnees = (await reponse.json()) as { access: string; refresh?: string }
+        definirJetons({ access: donnees.access, refresh: donnees.refresh })
         return true
       } catch {
         effacerJetons()

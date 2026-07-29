@@ -1,8 +1,37 @@
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 from .base import *  # noqa: F401,F403
 
 DEBUG = False
+
+# `config.settings.base` fournit des valeurs de repli pour tourner sans .env en dev
+# (§0, confort local). Ces mêmes replis, restés actifs en production, videraient de
+# leur sens les contrôles qu'ils protègent : une `SECRET_KEY` connue casse la
+# signature des sessions/JWT/CSRF, une `CLE_CHIFFREMENT_DONNEES` connue annule le
+# chiffrement de l'identité des personnes détenues (§9.3, apps.detenus) puisque la
+# valeur figure en clair dans l'historique Git. On échoue donc au démarrage plutôt
+# que de tourner silencieusement avec un secret public.
+_SECRETS_A_VERIFIER = {
+    "SECRET_KEY": "change-moi-en-dev-uniquement",
+    "CLE_CHIFFREMENT_DONNEES": "c2VjcmV0LWRldi11bmlxdWVtZW50LTMyLW9jdGV0cyE=",
+}
+for _nom_secret, _valeur_dev in _SECRETS_A_VERIFIER.items():
+    if globals().get(_nom_secret) == _valeur_dev:
+        raise ImproperlyConfigured(
+            f"{_nom_secret} est resté à sa valeur de développement — à définir "
+            "explicitement en production (variable d'environnement, §9.3)."
+        )
+if DATABASES["default"]["PASSWORD"] == "dgap":  # noqa: F405
+    raise ImproperlyConfigured(
+        "POSTGRES_PASSWORD est resté à sa valeur de développement — à définir "
+        "explicitement en production."
+    )
+if STORAGES["default"]["OPTIONS"]["secret_key"] == "dgap-dev-secret":  # type: ignore[index]  # noqa: F405
+    raise ImproperlyConfigured(
+        "MINIO_SECRET_KEY est resté à sa valeur de développement — à définir "
+        "explicitement en production."
+    )
 
 # Nginx assure la terminaison TLS (§9.3) ; on fait confiance à son en-tête forwarded.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

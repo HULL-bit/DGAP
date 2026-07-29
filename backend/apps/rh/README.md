@@ -1,7 +1,8 @@
 # apps.rh
 
-Ressources humaines (M8) et demandes internes (M7) — Bloc F/G.
+Ressources humaines (M8) et reste des demandes internes (M7) — Bloc G. Jamais
+exposé côté public.
 
-**Non implémenté en Phase 0** — dossier de scaffolding (migrations/, apps.py) prêt à
-recevoir modèles, migrations, sérialiseurs et vues lors du bloc indiqué ci-dessus.
-Cette app n'est volontairement pas ajoutée à `INSTALLED_APPS` tant qu'elle est vide.
+Voir le docstring de `apps/rh/models.py` pour le détail de ce qui est livré
+(EF-801, EF-802, EF-703, EF-704, EF-706) et de ce qui est explicitement hors
+périmètre de cette passe (EF-705, EF-707, EF-708, EF-803 à EF-807).

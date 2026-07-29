@@ -83,3 +83,70 @@ export interface DemandeVisiteStatutPublique {
   motif_rejet: string
   cree_le: string
 }
+
+// --- Téléservice Concours -----------------------------------------------------
+
+export type StatutConcours = 'BROUILLON' | 'OUVERT' | 'CLOTURE' | 'RESULTATS_PUBLIES'
+
+export interface Concours {
+  id: string
+  titre: string
+  code: string
+  description: string
+  conditions: string
+  frais_inscription: string
+  date_ouverture: string
+  date_cloture: string
+  date_concours: string | null
+  places_disponibles: number | null
+  statut: StatutConcours
+}
+
+export type StatutCandidature =
+  | 'SOUMISE'
+  | 'EN_INSTRUCTION'
+  | 'PIECES_MANQUANTES'
+  | 'ADMISSIBLE'
+  | 'CONVOQUE'
+  | 'ADMIS'
+  | 'REJETE'
+
+export type StatutPaiement = 'EN_ATTENTE' | 'PAYE' | 'ECHEC'
+
+export interface Paiement {
+  id: string
+  reference: string
+  montant: string
+  moyen: string
+  statut: StatutPaiement
+  paye_le: string | null
+  cree_le: string
+}
+
+export interface CandidatureCreation {
+  concours: string
+  candidat_nom: string
+  candidat_prenom: string
+  candidat_email: string
+  candidat_telephone: string
+  niveau_etude: string
+  experience: string
+}
+
+export interface CandidatureAccuse {
+  id: string
+  numero_suivi: string
+  code_suivi: string
+  statut: StatutCandidature
+  paiement: Paiement | null
+  cree_le: string
+}
+
+export interface CandidatureStatutPublique {
+  numero_suivi: string
+  statut: StatutCandidature
+  concours: Concours
+  motif_rejet: string
+  paiement: Paiement | null
+  cree_le: string
+}

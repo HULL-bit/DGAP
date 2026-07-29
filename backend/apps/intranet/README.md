@@ -1,7 +1,11 @@
 # apps.intranet
 
-Tableau de bord agent, notes de service (M7) — Bloc F.
+Portail agents (M7) — Bloc F.
 
-**Non implémenté en Phase 0** — dossier de scaffolding (migrations/, apps.py) prêt à
-recevoir modèles, migrations, sérialiseurs et vues lors du bloc indiqué ci-dessus.
-Cette app n'est volontairement pas ajoutée à `INSTALLED_APPS` tant qu'elle est vide.
+Livré : tableau de bord personnel (EF-701, côté frontend — s'appuie sur `/auth/moi`,
+`/intranet/notes` et `/articles` existants, sans endpoint dédié) et notes de service
+(EF-702) avec ciblage par périmètre et accusé de lecture.
+
+Non couvert par cette passe (dépendent de blocs non livrés — RH, GEC) : demandes
+administratives (EF-703), dossier agent (EF-704), formation (EF-705), annuaire
+interne (EF-706), calendrier institutionnel (EF-707), messagerie de service (EF-708).

@@ -196,3 +196,19 @@ def test_une_transition_invalide_renvoie_un_conflit():
         format="json",
     )
     assert reponse.status_code == 409
+
+
+def test_le_renvoi_de_suivi_repond_generiquement_avec_ou_sans_correspondance():
+    APIClient().post("/api/v1/demandes-visite", _charge_depot(_etablissement()), format="json")
+
+    client = APIClient()
+    avec_correspondance = client.post(
+        "/api/v1/demandes-visite/renvoi", {"email": "awa.ndiaye@example.sn"}, format="json"
+    )
+    sans_correspondance = client.post(
+        "/api/v1/demandes-visite/renvoi", {"email": "personne@example.sn"}, format="json"
+    )
+
+    assert avec_correspondance.status_code == 200
+    assert sans_correspondance.status_code == 200
+    assert avec_correspondance.data["detail"] == sans_correspondance.data["detail"]

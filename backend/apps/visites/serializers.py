@@ -108,3 +108,13 @@ class VerificationPermisReponseSerializer(serializers.Serializer):
     valide = serializers.BooleanField()
     detail = serializers.CharField(required=False)
     charge = serializers.DictField(required=False)
+
+
+class RenvoiSuiviSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        help_text="Adresse renseignée lors du dépôt — sert à retrouver les demandes associées."
+    )
+
+
+class RenvoiSuiviReponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()

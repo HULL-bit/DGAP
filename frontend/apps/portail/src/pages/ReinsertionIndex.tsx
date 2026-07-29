@@ -1,9 +1,12 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
+import { requeteApi } from '@dgap/api-client'
 import { propsApparition, conteneurEnCascade, elementEnCascade } from '@dgap/ui'
 import { categoriesReinsertion } from '../data/reinsertion'
+import type { GalerieResume } from '../types/api'
 
 const degrades = [
   ['#0B6E4F', '#123524'],
@@ -13,6 +16,16 @@ const degrades = [
 ]
 
 export function ReinsertionIndex() {
+  const { data: galeries } = useQuery({
+    queryKey: ['galeries', 'reinsertion-'],
+    queryFn: () => requeteApi<GalerieResume[]>('/galeries?prefixe=reinsertion-'),
+    retry: false,
+  })
+
+  function couvertureDe(slug: string): string {
+    return galeries?.find((g) => g.code === `reinsertion-${slug}`)?.couverture ?? ''
+  }
+
   return (
     <>
       <Helmet>
@@ -45,6 +58,7 @@ export function ReinsertionIndex() {
         >
           {categoriesReinsertion.map((categorie, i) => {
             const [de, a] = degrades[i % degrades.length]!
+            const couverture = couvertureDe(categorie.slug)
             return (
               <motion.div key={categorie.slug} variants={elementEnCascade}>
                 <Link
@@ -55,13 +69,30 @@ export function ReinsertionIndex() {
                 >
                   <div
                     className="relative flex h-36 items-center justify-center overflow-hidden"
-                    style={{ background: `linear-gradient(135deg, ${de}, ${a})` }}
+                    style={couverture ? undefined : { background: `linear-gradient(135deg, ${de}, ${a})` }}
                   >
+                    {couverture && (
+                      <>
+                        <img
+                          src={couverture}
+                          alt=""
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-dgap group-hover:scale-105"
+                        />
+                        <div
+                          className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/0 to-black/0"
+                          aria-hidden="true"
+                        />
+                      </>
+                    )}
                     <categorie.icone
                       size={40}
                       strokeWidth={1.5}
                       aria-hidden="true"
-                      className="text-white/90 transition-transform duration-300 ease-dgap group-hover:scale-110"
+                      className={
+                        couverture
+                          ? 'relative text-white drop-shadow-md transition-transform duration-300 ease-dgap group-hover:scale-110'
+                          : 'text-white/90 transition-transform duration-300 ease-dgap group-hover:scale-110'
+                      }
                     />
                   </div>
                   <div className="p-5">

@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { requeteApi, ApiError } from '@dgap/api-client'
-import { propsApparition } from '@dgap/ui'
-import type { ArticleDetail as ArticleDetailType } from '../types/api'
+import { propsApparition, GalerieMedias } from '@dgap/ui'
+import type { ArticleDetail as ArticleDetailType, Galerie } from '../types/api'
 
 export function ArticleDetail() {
   const { slug } = useParams<{ slug: string }>()
@@ -14,6 +14,13 @@ export function ArticleDetail() {
     queryKey: ['article', slug],
     queryFn: () => requeteApi<ArticleDetailType>(`/articles/${slug}`),
     enabled: Boolean(slug),
+  })
+
+  const { data: galerie } = useQuery({
+    queryKey: ['galerie', data?.galerie_code],
+    queryFn: () => requeteApi<Galerie>(`/galeries/${data!.galerie_code}`),
+    enabled: Boolean(data?.galerie_code),
+    retry: false,
   })
 
   const introuvable = isError && error instanceof ApiError && error.probleme.status === 404
@@ -61,6 +68,14 @@ export function ArticleDetail() {
               // Contenu produit par le back-office éditorial (Bloc C) — non fourni par l'utilisateur final.
               dangerouslySetInnerHTML={{ __html: data.contenu }}
             />
+            {galerie && galerie.medias.length > 0 && (
+              <div className="mt-10">
+                <h2 className="font-titre text-xl font-bold text-text-strong dark:text-text-inv-strong">Galerie</h2>
+                <div className="mt-4">
+                  <GalerieMedias medias={galerie.medias} />
+                </div>
+              </div>
+            )}
           </motion.article>
         )}
       </section>
