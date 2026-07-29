@@ -18,6 +18,7 @@ const TON_PAR_STATUT: Record<StatutCourrierEntrant, TonBadge> = {
 
 interface FormulaireCourrier {
   expediteur: string
+  expediteur_email: string
   objet: string
   date_reception: string
   confidentialite: NiveauConfidentialite
@@ -25,6 +26,7 @@ interface FormulaireCourrier {
 
 const FORMULAIRE_VIDE: FormulaireCourrier = {
   expediteur: '',
+  expediteur_email: '',
   objet: '',
   date_reception: new Date().toISOString().slice(0, 10),
   confidentialite: 'NORMAL',
@@ -98,6 +100,14 @@ export function CourrierListe() {
               value={champs.expediteur}
               onChange={(e) => majChamp('expediteur', e.target.value)}
               erreur={erreurs.expediteur}
+            />
+            <ChampTexte
+              etiquette="E-mail de l'expéditeur (facultatif)"
+              type="email"
+              aide="Si connu, la réponse lui sera envoyée automatiquement par e-mail à l'expédition."
+              value={champs.expediteur_email}
+              onChange={(e) => majChamp('expediteur_email', e.target.value)}
+              erreur={erreurs.expediteur_email}
             />
             <ChampTexte
               etiquette="Objet"

@@ -147,6 +147,14 @@ export function ConcoursEditeur() {
         {concours.titre}
       </motion.h1>
 
+      {champs.statut !== 'OUVERT' && (
+        <p className="mt-4 max-w-2xl rounded-bouton border border-warning bg-warning/10 px-4 py-3 font-corps text-sm text-warning">
+          {champs.statut === 'BROUILLON'
+            ? "Ce concours est en brouillon — invisible sur le portail et l'espace démarches tant qu'il n'est pas passé au statut « Ouvert » ci-dessous."
+            : 'Ce concours n\'est plus « Ouvert » — il n\'apparaît donc plus sur le portail ni l\'espace démarches.'}
+        </p>
+      )}
+
       <div className="mt-8 flex max-w-2xl flex-col gap-5">
         <ChampTexte
           etiquette="Titre"

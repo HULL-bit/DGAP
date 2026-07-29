@@ -80,6 +80,36 @@ def test_le_cycle_de_reponse_trace_le_signataire():
     assert reponse.statut == StatutReponse.EXPEDIE
 
 
+def test_expedition_envoie_un_email_reel_si_lexpediteur_en_a_un():
+    from django.core import mail
+
+    courrier = _courrier(expediteur_email="ministere@example.sn")
+    reponse = ReponseCourrier.objects.create(courrier=courrier, contenu="Voici notre réponse.")
+    reponse.transitionner("viser")
+    reponse.transitionner("valider")
+
+    reponse.transitionner("expedier")
+
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == ["ministere@example.sn"]
+    assert courrier.numero in mail.outbox[0].subject
+    assert mail.outbox[0].body == "Voici notre réponse."
+
+
+def test_expedition_sans_email_connu_ne_leve_pas_derreur():
+    from django.core import mail
+
+    courrier = _courrier()  # pas d'expediteur_email
+    reponse = ReponseCourrier.objects.create(courrier=courrier, contenu="Réponse")
+    reponse.transitionner("viser")
+    reponse.transitionner("valider")
+
+    reponse.transitionner("expedier")
+
+    assert reponse.statut == StatutReponse.EXPEDIE
+    assert len(mail.outbox) == 0
+
+
 def test_courriers_visibles_par_exclut_les_confidentiels_sans_scope():
     from apps.comptes.models import AffectationRole, Permission, Role, Utilisateur
     from apps.courrier.models import courriers_entrants_visibles_par

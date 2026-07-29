@@ -72,6 +72,7 @@ class CourrierEntrantListeSerializer(serializers.ModelSerializer):
             "id",
             "numero",
             "expediteur",
+            "expediteur_email",
             "objet",
             "date_reception",
             "confidentialite",
@@ -110,7 +111,15 @@ class CourrierEntrantDetailSerializer(CourrierEntrantListeSerializer):
 class CourrierEntrantCreationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourrierEntrant
-        fields = ["id", "expediteur", "objet", "date_reception", "confidentialite", "numero"]
+        fields = [
+            "id",
+            "expediteur",
+            "expediteur_email",
+            "objet",
+            "date_reception",
+            "confidentialite",
+            "numero",
+        ]
         read_only_fields = ["id", "numero"]
 
 

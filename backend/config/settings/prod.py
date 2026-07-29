@@ -52,3 +52,23 @@ EMAIL_PORT = config("EMAIL_PORT", cast=int, default=587)
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+
+# `sentry-sdk` est une dépendance du projet depuis l'origine mais n'était encore
+# initialisé nulle part — aucune erreur de production ne remontait ailleurs que
+# dans les logs du conteneur. Optionnel (no-op sans DSN) : ne bloque pas le
+# démarrage si absent, contrairement aux secrets ci-dessus. `send_default_pii`
+# explicitement à `False` — ce système journalise l'identité de personnes
+# détenues (§9.3, apps.detenus) et de courriers confidentiels, jamais à envoyer
+# à un tiers de supervision par défaut.
+SENTRY_DSN = config("SENTRY_DSN", default="")
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        environment=config("SENTRY_ENVIRONMENT", default="production"),
+        traces_sample_rate=config("SENTRY_TRACES_SAMPLE_RATE", cast=float, default=0.1),
+        send_default_pii=False,
+    )

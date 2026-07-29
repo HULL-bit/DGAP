@@ -616,17 +616,78 @@ ailleurs. Voir le docstring d'`apps/interop/models.py` pour le détail complet.
   concours `OUVERT`) affiché directement sur l'accueil, avec lien vers la
   liste complète.
 
+## Phase 14 — Durcissement production
+
+Toutes les briques métier étant livrées (Phases 0-13), cette passe audite ce
+qui existait déjà côté production/CI (`config/settings/prod.py`,
+`.github/workflows/ci.yml`, `backend/Dockerfile` — plus mature qu'attendu :
+en-têtes de sécurité, cookies stricts, HSTS, `pip-audit`/`npm audit`/scan
+Trivy déjà en place) et corrige ce qui restait concrètement faillible.
+
+- **Secrets de développement utilisables silencieusement en production** —
+  `config.settings.base` fournit des valeurs de repli pour tourner sans `.env`
+  en dev (`SECRET_KEY`, `CLE_CHIFFREMENT_DONNEES`, mot de passe Postgres, clé
+  secrète MinIO). Rien n'empêchait `config.settings.prod` de démarrer avec ces
+  mêmes valeurs si l'exploitant oubliait de les redéfinir — la plus grave
+  étant `CLE_CHIFFREMENT_DONNEES`, dont la valeur de repli figure en clair
+  dans l'historique Git : le chiffrement de l'identité des personnes détenues
+  (Phase 12) n'aurait alors protégé personne. `prod.py` échoue désormais au
+  démarrage (`ImproperlyConfigured`) si l'une de ces valeurs est restée à son
+  défaut de développement — vérifié dans les deux sens (échec avec les
+  défauts, démarrage propre avec de vrais secrets, `manage.py check --deploy`
+  ne remonte plus aucun problème une fois ces variables renseignées).
+- **Sonde `/sante/` factice** — répondait `{"statut": "ok"}` sans vérifier
+  quoi que ce soit, y compris avec la base de données injoignable : un load
+  balancer aurait continué à router du trafic vers une instance cassée.
+  Vérifie désormais une vraie connexion DB (`SELECT 1`), renvoie 503 sinon.
+- **`worker`/`beat` en boucle de redémarrage silencieuse** — `docker compose
+  build backend` (fait en construisant `apps.detenus`, pour la dépendance
+  `cryptography`) ne reconstruit que l'image du service `backend` ; `worker`
+  et `beat` définissent chacun leur propre image (même Dockerfile, contexte
+  commun, mais trois images distinctes en l'absence d'un tag `image:` partagé)
+  et n'avaient jamais été reconstruits — `ModuleNotFoundError: No module named
+  'cryptography'` à chaque tentative de démarrage dès qu'`apps.detenus` a
+  rejoint `INSTALLED_APPS`, en boucle infinie et silencieuse (aucune tâche de
+  fond, aucun Celery beat, ne tournait plus depuis). Corrigé en reconstruisant
+  les deux images séparément ; `docker compose ps` confirme les deux services
+  stables.
+- **`nginx` démarrait sans attendre un backend réellement prêt** —
+  dépendait de `backend` avec `condition: service_started` (processus lancé,
+  pas nécessairement apte à répondre) faute de `healthcheck` déclaré sur ce
+  service. Ajouté un `healthcheck` (`curl -f .../sante/`) sur `backend`,
+  `nginx` dépend maintenant de `condition: service_healthy`.
+- **`sentry-sdk` installé mais jamais initialisé** — dépendance présente
+  depuis l'origine du projet, aucun appel à `sentry_sdk.init()` nulle part :
+  une exception en production ne remontait que dans les logs du conteneur,
+  aucune agrégation ni alerte centralisée. Initialisé dans
+  `config.settings.prod` uniquement, conditionné à `SENTRY_DSN` (vide =
+  désactivé, aucun appel réseau) ; `send_default_pii=False` explicite — ce
+  système journalise l'identité de personnes détenues et des courriers
+  confidentiels, jamais à envoyer à un tiers de supervision par défaut.
+  Vérifié dans les deux sens (DSN vide : aucune initialisation ; DSN fourni :
+  client Sentry actif).
+
+**Gap documenté, non traité dans cette passe** : les dépendances Python
+(`pyproject.toml`) utilisent des bornes basses (`>=`) sans fichier de verrou
+(`pip-tools`/`uv`/`poetry` absent) — une build reconstruite plus tard peut
+résoudre des versions transitoires différentes. Non corrigé ici : introduire
+un outil de verrouillage change l'outillage de tout le flux `pip install -e .`
+déjà utilisé dans ce dépôt (dev comme CI), une décision d'équipe plutôt qu'une
+correction locale.
+
 ## Ce qui reste à construire
 
-Toutes les briques listées dans le prompt de cadrage (Blocs B à G) sont
-livrées. Les seuls éléments hors périmètre sont ceux documentés comme
+Toutes les briques métier listées dans le prompt de cadrage (Blocs B à G)
+sont livrées. Les seuls éléments hors périmètre sont ceux documentés comme
 « non couvert » dans chaque section de phase ci-dessus (Phases 0 à 13) —
 principalement des fonctionnalités dépendant de contreparties externes
 réelles (chaîne judiciaire, forces de sécurité, passerelles de paiement
-réelles, plateformes gouvernementales), d'infrastructure de déploiement
-(isolement réseau physique, tâches planifiées Celery), ou explicitement
-classées « Lot 5 — perspectives » par le cahier des charges (IA, application
-mobile, Open Data, signature électronique qualifiée).
+réelles, plateformes gouvernementales), ou explicitement classées
+« Lot 5 — perspectives » par le cahier des charges (IA, application mobile,
+Open Data, signature électronique qualifiée). Côté infrastructure,
+l'isolement réseau physique (VLAN/segment dédié pour `apps.detenus`) reste
+une décision de déploiement — les allow-lists VPN sont déjà présentes,
+commentées, dans `admin.conf`/`intranet.conf`, prêtes à activer.
 
 ## Comptes de démonstration
 

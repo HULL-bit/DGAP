@@ -90,6 +90,11 @@ def chemin_courrier_entrant(instance: CourrierEntrant, nom_fichier: str) -> str:
 class CourrierEntrant(ModeleAvecSuppressionLogique):
     numero = models.CharField(max_length=30, unique=True, editable=False)
     expediteur = models.CharField(max_length=200)
+    expediteur_email = models.EmailField(
+        blank=True,
+        help_text="Si connu — permet l'envoi automatique de la réponse par e-mail "
+        "à l'expédition (courrier postal/institutionnel sans e-mail : laisser vide).",
+    )
     objet = models.CharField(max_length=300)
     date_reception = models.DateField(default=timezone.now)
     confidentialite = models.CharField(
@@ -246,6 +251,25 @@ class ReponseCourrier(ModeleBase):
         if acteur is not None:
             self.modifie_par = acteur
         self.save()
+        if action == "expedier":
+            self._envoyer_par_email()
+
+    def _envoyer_par_email(self) -> None:
+        """Envoi réel (SMTP) — best-effort, ne fait jamais échouer l'expédition :
+        tout le courrier institutionnel n'a pas nécessairement d'e-mail connu
+        (correspondance postale), et un échec d'envoi ne doit pas bloquer une
+        transition déjà actée (même patron que apps.visites/apps.concours)."""
+        destinataire = self.courrier.expediteur_email
+        if not destinataire:
+            return
+        from apps.notifications.services import notifier_email
+
+        notifier_email(
+            destinataire=destinataire,
+            sujet=f"Réponse à votre courrier {self.courrier.numero} — {self.courrier.objet}",
+            contenu=self.contenu,
+            objet_source=self,
+        )
 
 
 class StatutCourrierSortant(models.TextChoices):

@@ -387,6 +387,7 @@ export interface CourrierEntrantListe {
   id: string
   numero: string
   expediteur: string
+  expediteur_email: string
   objet: string
   date_reception: string
   confidentialite: NiveauConfidentialite

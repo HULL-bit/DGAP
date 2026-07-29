@@ -5906,6 +5906,16 @@ components:
         expediteur:
           type: string
           maxLength: 200
+        expediteur_email:
+          description: 'Si connu — permet l''envoi automatique de la réponse par e-mail
+            à l''expédition (courrier postal/institutionnel sans e-mail : laisser
+            vide).'
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         objet:
           type: string
           maxLength: 300
@@ -5935,6 +5945,13 @@ components:
         expediteur:
           type: string
           readOnly: true
+        expediteur_email:
+          type: string
+          format: email
+          readOnly: true
+          description: 'Si connu — permet l''envoi automatique de la réponse par e-mail
+            à l''expédition (courrier postal/institutionnel sans e-mail : laisser
+            vide).'
         objet:
           type: string
           readOnly: true
@@ -5995,6 +6012,7 @@ components:
       - delai_reponse
       - est_en_retard
       - expediteur
+      - expediteur_email
       - fichier_url
       - id
       - instructions
@@ -6016,6 +6034,13 @@ components:
         expediteur:
           type: string
           readOnly: true
+        expediteur_email:
+          type: string
+          format: email
+          readOnly: true
+          description: 'Si connu — permet l''envoi automatique de la réponse par e-mail
+            à l''expédition (courrier postal/institutionnel sans e-mail : laisser
+            vide).'
         objet:
           type: string
           readOnly: true
@@ -6059,6 +6084,7 @@ components:
       - delai_reponse
       - est_en_retard
       - expediteur
+      - expediteur_email
       - id
       - numero
       - objet
@@ -8480,6 +8506,13 @@ components:
         expediteur:
           type: string
           readOnly: true
+        expediteur_email:
+          type: string
+          format: email
+          readOnly: true
+          description: 'Si connu — permet l''envoi automatique de la réponse par e-mail
+            à l''expédition (courrier postal/institutionnel sans e-mail : laisser
+            vide).'
         objet:
           type: string
           readOnly: true

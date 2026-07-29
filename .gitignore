@@ -12,6 +12,18 @@ __pycache__/
 venv/
 backend/staticfiles/
 backend/media/
+# Fuite de STOCKAGE_LOCAL_TEST (tests avec FileSystemStorage sans `location` définie,
+# @override_settings dans apps/{mediatheque,ged}/tests) : les fichiers de test
+# atterrissent directement sous backend/<prefixe upload_to>/ plutôt que backend/media/.
+backend/articles/
+backend/boutique/
+backend/concours/
+backend/courrier/
+backend/detenus/
+backend/documents/
+backend/galeries/
+backend/ged/
+backend/visites/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/

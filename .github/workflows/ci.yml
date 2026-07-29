@@ -42,6 +42,11 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      # OCR (apps.ged, EF-602) : le runner ubuntu-latest ne fournit pas Tesseract par
+      # défaut, contrairement à l'image Docker du backend — sans cet apt-get, tous les
+      # tests OCR échouent silencieusement (ECHEC au lieu de TRAITE, exception avalée
+      # par le patron best-effort d'`extraire_texte_ocr`).
+      - run: sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-fra poppler-utils
       - run: pip install -e ".[dev]"
       - run: ruff check .
       - run: black --check .
@@ -66,7 +71,9 @@ jobs:
         with:
           version: 9
       - run: pnpm install --frozen-lockfile=false
-      - run: pnpm -r exec tsc --noEmit
+      # @dgap/config n'a pas de tsc (presets JS purs Tailwind/ESLint, rien à
+      # type-checker) — l'exclure sinon `pnpm -r` échoue sur "Command tsc not found".
+      - run: pnpm --filter '!@dgap/config' -r exec tsc --noEmit
       - run: pnpm -r lint
       - run: pnpm -r --filter=./apps/* build
       - run: pnpm --filter @dgap/ui build-storybook

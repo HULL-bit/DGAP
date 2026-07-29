@@ -158,6 +158,11 @@ export function CourrierDetail() {
           <p className="mt-1 font-corps text-sm text-text-muted dark:text-text-inv-muted">
             {courrier.expediteur} — {courrier.objet}
           </p>
+          {courrier.expediteur_email && (
+            <p className="mt-0.5 font-corps text-xs text-text-muted dark:text-text-inv-muted">
+              {courrier.expediteur_email} — la réponse expédiée lui sera envoyée par e-mail
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Badge ton="neutre" libelle={LIBELLES_CONFIDENTIALITE[courrier.confidentialite]} />
