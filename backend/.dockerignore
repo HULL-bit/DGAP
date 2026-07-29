@@ -1,0 +1,24 @@
+# Environnement de dev local — jamais dans l'image (mauvaise version de Python,
+# gonfle l'image, contamine les scans de vulnérabilités avec des paquets qui n'y
+# sont pas réellement installés par le Dockerfile).
+.venv/
+venv/
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+staticfiles/
+media/
+
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
