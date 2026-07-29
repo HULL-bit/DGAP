@@ -55,7 +55,15 @@ jobs:
       - run: python manage.py check
       - run: pytest
       - name: Audit des dépendances Python
-        run: pip install pip-audit && pip-audit --strict --skip-editable
+        # `--skip-editable` n'empêche pas pip-audit d'échouer sur le paquet éditable
+        # du projet lui-même (dgap-backend, installé via `-e .`) quand on audite
+        # l'environnement directement : on limite donc l'audit aux dépendances
+        # tierces (pip freeze --exclude-editable), le seul périmètre pertinent —
+        # notre propre code n'est de toute façon pas publié sur PyPI.
+        run: |
+          pip install pip-audit
+          pip freeze --exclude-editable > /tmp/requirements-audit.txt
+          pip-audit -r /tmp/requirements-audit.txt --strict
 
   frontend:
     runs-on: ubuntu-latest
