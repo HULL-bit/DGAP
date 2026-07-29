@@ -96,7 +96,7 @@ jobs:
       - name: Build image backend
         run: docker build -t dgap-backend:ci ./backend
       - name: Scan Trivy — image backend
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: dgap-backend:ci
           severity: CRITICAL,HIGH
