@@ -160,7 +160,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # --- Stockage objet (MinIO / S3) --------------------------------------------------
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
+        "BACKEND": "core.storage.StockageMedia",
         "OPTIONS": {
             "access_key": config("MINIO_ACCESS_KEY", default="dgap"),
             "secret_key": config("MINIO_SECRET_KEY", default="dgap-dev-secret"),
