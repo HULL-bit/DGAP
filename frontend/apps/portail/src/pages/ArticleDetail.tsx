@@ -63,6 +63,13 @@ export function ArticleDetail() {
             <h1 className="mt-3 font-titre text-3xl font-bold text-text-strong dark:text-text-inv-strong sm:text-4xl">
               {data.titre}
             </h1>
+            {data.image_url && (
+              <img
+                src={data.image_url}
+                alt=""
+                className="mt-6 aspect-[16/9] w-full rounded-carte object-cover"
+              />
+            )}
             <div
               className="prose prose-neutral mt-6 max-w-none font-corps text-text-body dark:text-text-inv-body"
               // Contenu produit par le back-office éditorial (Bloc C) — non fourni par l'utilisateur final.

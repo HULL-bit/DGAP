@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { Newspaper } from 'lucide-react'
 import { requeteApi } from '@dgap/api-client'
 import { propsApparition, conteneurEnCascade, elementEnCascade } from '@dgap/ui'
 import type { ArticleListe, Pagination } from '../types/api'
@@ -66,34 +67,46 @@ export function Actualites() {
             <motion.article
               key={article.id}
               variants={elementEnCascade}
-              className="overflow-hidden rounded-carte border border-border bg-white shadow-legere transition-shadow duration-200 ease-dgap hover:shadow-portee
+              className="group overflow-hidden rounded-carte border border-border bg-white shadow-legere transition-shadow duration-200 ease-dgap hover:shadow-portee
                          dark:border-border-dark dark:bg-surface-dark-alt"
             >
-              <div className="h-1.5 bg-gradient-to-r from-primary to-accent" aria-hidden="true" />
-              <div className="p-5">
-                {article.date_publication && (
-                  <time dateTime={article.date_publication} className="font-corps text-xs font-medium text-text-muted dark:text-text-inv-muted">
-                    {new Date(article.date_publication).toLocaleDateString('fr-SN', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </time>
-                )}
-                <Link
-                  to={`/actualite/${article.slug}`}
-                  className="mt-2 block font-corps text-base font-semibold leading-snug text-text-strong hover:text-primary
-                             dark:text-text-inv-strong dark:hover:text-accent-soft
-                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                >
-                  {article.titre}
-                </Link>
-                {article.chapo && (
-                  <p className="mt-2 line-clamp-3 font-corps text-sm text-text-muted dark:text-text-inv-muted">
-                    {article.chapo}
+              <Link
+                to={`/actualite/${article.slug}`}
+                className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-primary to-primary-dark">
+                  {article.image_url ? (
+                    <img
+                      src={article.image_url}
+                      alt=""
+                      className="h-full w-full object-cover transition-transform duration-300 ease-dgap group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <Newspaper size={32} strokeWidth={1.5} aria-hidden="true" className="text-white/70" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-5">
+                  {article.date_publication && (
+                    <time dateTime={article.date_publication} className="font-corps text-xs font-medium text-text-muted dark:text-text-inv-muted">
+                      {new Date(article.date_publication).toLocaleDateString('fr-SN', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </time>
+                  )}
+                  <p className="mt-2 font-corps text-base font-semibold leading-snug text-text-strong dark:text-text-inv-strong">
+                    {article.titre}
                   </p>
-                )}
-              </div>
+                  {article.chapo && (
+                    <p className="mt-2 line-clamp-3 font-corps text-sm text-text-muted dark:text-text-inv-muted">
+                      {article.chapo}
+                    </p>
+                  )}
+                </div>
+              </Link>
             </motion.article>
           ))}
         </motion.div>
