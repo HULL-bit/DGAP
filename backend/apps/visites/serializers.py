@@ -75,6 +75,7 @@ class DemandeVisiteInstructionSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "numero_suivi",
+            "code_suivi",
             "statut",
             "visiteur_nom",
             "visiteur_prenom",

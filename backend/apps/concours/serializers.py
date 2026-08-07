@@ -159,6 +159,7 @@ class CandidatureInstructionSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "numero_suivi",
+            "code_suivi",
             "statut",
             "candidat_nom",
             "candidat_prenom",

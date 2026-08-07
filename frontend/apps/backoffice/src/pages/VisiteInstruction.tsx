@@ -97,9 +97,15 @@ export function VisiteInstruction() {
       </Link>
 
       <motion.div className="mt-4 flex items-center justify-between gap-4" {...propsApparition()}>
-        <h1 className="font-titre text-2xl font-bold text-text-strong dark:text-text-inv-strong">
-          {demande.numero_suivi}
-        </h1>
+        <div>
+          <h1 className="font-titre text-2xl font-bold text-text-strong dark:text-text-inv-strong">
+            {demande.numero_suivi}
+          </h1>
+          <p className="mt-1 font-corps text-sm text-text-muted dark:text-text-inv-muted">
+            Code de suivi :{' '}
+            <span className="font-medium text-text-strong dark:text-text-inv-strong">{demande.code_suivi}</span>
+          </p>
+        </div>
         <Badge ton={TON_PAR_STATUT[demande.statut]} libelle={LIBELLES_STATUT_VISITE[demande.statut]} />
       </motion.div>
 

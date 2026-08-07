@@ -156,6 +156,7 @@ export interface PieceJointeVisite {
 export interface DemandeVisiteInstruction {
   id: string
   numero_suivi: string
+  code_suivi: string
   statut: StatutDemandeVisite
   visiteur_nom: string
   visiteur_prenom: string
@@ -256,6 +257,7 @@ export interface Paiement {
 export interface CandidatureInstruction {
   id: string
   numero_suivi: string
+  code_suivi: string
   statut: StatutCandidature
   candidat_nom: string
   candidat_prenom: string
