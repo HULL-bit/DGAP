@@ -1,0 +1,16 @@
+# CVE explicitement écartées après analyse — ne pas ajouter d'entrée ici sans
+# avoir d'abord confirmé (comme ci-dessous) que le correctif amont n'est
+# réellement pas applicable depuis ce dépôt.
+
+# msgpack GHSA-6v7p-g79w-8964 (installed 1.1.2, fix 1.2.1) et setuptools
+# CVE-2025-47273 (installed 70.3.0, fix 78.1.1) : les deux sont vendorisées à
+# l'intérieur de pip lui-même (pip/_vendor/msgpack, pip/_vendor/pkg_resources)
+# — jamais installées comme paquets séparés (absentes de `pip list`), utilisées
+# uniquement par le résolveur interne de pip à l'installation, jamais par le
+# code applicatif en exécution. pip 26.2.1 (dernière version disponible au
+# 2026-08-07) embarque encore ces versions ; aucune version de pyproject.toml
+# ne peut les faire évoluer indépendamment — seule une future release de pip
+# les mettra à jour. Vérifié : `pip list` ne les liste pas, seule l'inspection
+# du système de fichiers de l'image les révèle.
+GHSA-6v7p-g79w-8964
+CVE-2025-47273
