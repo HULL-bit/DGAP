@@ -268,8 +268,7 @@ export function Accueil() {
               <motion.div
                 key={d.titre}
                 initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
               >
                 <CarteAction {...d} />
@@ -295,8 +294,7 @@ export function Accueil() {
           className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
           variants={conteneurEnCascade()}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
+          animate="visible"
         >
           {(articles?.results ?? []).map((article) => (
             <motion.article
@@ -434,8 +432,7 @@ export function Accueil() {
             className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
             variants={conteneurEnCascade()}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            animate="visible"
           >
             {categoriesAccueil.map((categorie, i) => {
               const [de, a] = degradesReinsertion[i % degradesReinsertion.length]!
@@ -520,8 +517,7 @@ export function Accueil() {
           className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
           variants={conteneurEnCascade()}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
+          animate="visible"
         >
           {(produitsBoutique?.results ?? []).map((produit) => (
             <motion.div
@@ -607,8 +603,7 @@ export function Accueil() {
             className="mt-8 grid gap-4 sm:grid-cols-2"
             variants={conteneurEnCascade()}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            animate="visible"
           >
             {(documents?.results ?? []).map((document) => (
               <motion.div
@@ -674,8 +669,7 @@ export function Accueil() {
             className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
             variants={conteneurEnCascade()}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            animate="visible"
           >
             {irap.map((r) => (
               <motion.div

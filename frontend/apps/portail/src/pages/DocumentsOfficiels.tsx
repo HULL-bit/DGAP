@@ -87,8 +87,7 @@ export function DocumentsOfficiels() {
                 className="mt-4 grid gap-4 sm:grid-cols-2"
                 variants={conteneurEnCascade()}
                 initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
+                animate="visible"
               >
                 {documents.map((document) => (
                   <motion.div

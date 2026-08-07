@@ -95,8 +95,7 @@ export function APropos() {
           className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
           variants={conteneurEnCascade()}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
+          animate="visible"
         >
           {directeursCentraux.map((d) => (
             <motion.div key={d.nom} variants={elementEnCascade}>
@@ -116,8 +115,7 @@ export function APropos() {
             className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
             variants={conteneurEnCascade()}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            animate="visible"
           >
             {directeursRegionaux.map((d) => (
               <motion.div key={d.nom} variants={elementEnCascade}>

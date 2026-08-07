@@ -48,8 +48,7 @@ export function ConcoursOuverts() {
           className="grid gap-5 sm:grid-cols-2"
           variants={conteneurEnCascade()}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
+          animate="visible"
         >
           {concoursListe.map((concours) => (
             <motion.div key={concours.id} variants={elementEnCascade}>

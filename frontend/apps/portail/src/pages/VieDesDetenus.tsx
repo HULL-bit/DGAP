@@ -116,8 +116,7 @@ export function VieDesDetenus() {
             <motion.div
               key={r.titre}
               initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: (i % 2) * 0.05, ease: [0.16, 1, 0.3, 1] }}
             >
               <Carte className="h-full">
