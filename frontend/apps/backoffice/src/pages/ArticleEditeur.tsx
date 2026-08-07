@@ -187,6 +187,14 @@ export function ArticleEditeur() {
         {article && <Badge ton={TON_PAR_STATUT[article.statut]} libelle={LIBELLES_STATUT[article.statut]} />}
       </motion.div>
 
+      {article && article.statut !== 'PUBLIE' && (
+        <p className="mt-4 max-w-2xl rounded-bouton border border-warning bg-warning/10 px-4 py-3 font-corps text-sm text-warning">
+          {article.statut === 'BROUILLON'
+            ? "Cet article est en brouillon — invisible sur le portail tant qu'il n'est pas passé au statut « Publié » via le circuit de validation ci-dessous."
+            : `Statut « ${LIBELLES_STATUT[article.statut]} » — cet article n'apparaît pas encore sur le portail public.`}
+        </p>
+      )}
+
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <fieldset disabled={!peutRediger} className="flex flex-col gap-5">

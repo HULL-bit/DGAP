@@ -35,6 +35,7 @@ dependencies = [
   "pytesseract>=0.3",
   "pdf2image>=1.17",
   "cryptography>=43",
+  "requests>=2.31",
 ]
 
 [project.optional-dependencies]
