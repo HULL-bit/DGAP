@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LogIn } from 'lucide-react'
 import { Bouton, ChampTexte, EmblemeCouleur, propsApparition } from '@dgap/ui'
@@ -94,6 +94,13 @@ export function Connexion() {
             {enCours ? 'Connexion…' : 'Se connecter'}
           </Bouton>
         </form>
+
+        <Link
+          to="/mot-de-passe-oublie"
+          className="mt-4 block text-center font-corps text-sm font-medium text-primary hover:underline dark:text-accent-soft"
+        >
+          Mot de passe oublié ?
+        </Link>
       </motion.div>
     </div>
   )

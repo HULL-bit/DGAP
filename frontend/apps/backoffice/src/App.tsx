@@ -4,6 +4,8 @@ import { EnTeteEtat, PiedDePage } from '@dgap/ui'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import { RouteProtegee } from './auth/RouteProtegee'
 import { Connexion } from './pages/Connexion'
+import { MotDePasseOublie } from './pages/MotDePasseOublie'
+import { ReinitialiserMotDePasse } from './pages/ReinitialiserMotDePasse'
 import { ConfigurerMFA } from './pages/ConfigurerMFA'
 import { ArticlesListe } from './pages/ArticlesListe'
 import { ArticleEditeur } from './pages/ArticleEditeur'
@@ -108,6 +110,8 @@ function AppRoutes() {
       <main id="contenu-principal" className="flex-1">
         <Routes>
           <Route path="/connexion" element={<Connexion />} />
+          <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+          <Route path="/reinitialiser-mot-de-passe" element={<ReinitialiserMotDePasse />} />
           <Route
             path="/configurer-mfa"
             element={

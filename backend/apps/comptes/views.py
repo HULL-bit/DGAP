@@ -4,18 +4,25 @@ import base64
 from io import BytesIO
 
 import qrcode
+from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from drf_spectacular.utils import extend_schema
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.audit.models import Action, JournalAction
+from apps.notifications.services import notifier_email
 from core.pagination import PaginationParCurseur
 from core.permissions import MFAConfirmee
 
@@ -27,9 +34,11 @@ from .serializers import (
     ConfirmationMFAReponseSerializer,
     ConfirmationMFARequeteSerializer,
     ConnexionSerializer,
+    DemandeReinitialisationMotDePasseSerializer,
     InscriptionMFAReponseSerializer,
     PerimetreSerializer,
     PermissionAdminSerializer,
+    ReinitialisationMotDePasseSerializer,
     RoleCreationSerializer,
     RoleSerializer,
     UtilisateurAdminEditSerializer,
@@ -37,6 +46,8 @@ from .serializers import (
     UtilisateurCreationSerializer,
     UtilisateurSerializer,
 )
+
+_generateur_jeton_reinitialisation = PasswordResetTokenGenerator()
 
 
 class ConnexionView(TokenObtainPairView):
@@ -140,6 +151,105 @@ class ConfirmationMFAView(APIView):
             requete=request,
         )
         return Response({"mfa_active": True})
+
+
+class DemandeReinitialisationMotDePasseView(APIView):
+    """POST /api/v1/auth/mot-de-passe-oublie — envoie un lien de réinitialisation par
+    e-mail.
+
+    Le SMS (notifications.services.notifier_sms) n'est que simulé tant que
+    l'agrégateur n'est pas souscrit : la réinitialisation passe donc uniquement par
+    e-mail pour l'instant. Répond toujours 200 avec un message générique, que
+    l'adresse corresponde ou non à un compte existant, pour ne pas permettre
+    l'énumération des comptes.
+    """
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(request=DemandeReinitialisationMotDePasseSerializer, responses=None)
+    def post(self, request):
+        serializer = DemandeReinitialisationMotDePasseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+
+        utilisateur = Utilisateur.objects.filter(email__iexact=email, is_active=True).first()
+        if utilisateur is not None:
+            origine = request.headers.get("Origin", "")
+            origines_autorisees = settings.CORS_ALLOWED_ORIGINS
+            base_url = origine if origine in origines_autorisees else origines_autorisees[0]
+            uid = urlsafe_base64_encode(force_bytes(utilisateur.pk))
+            jeton = _generateur_jeton_reinitialisation.make_token(utilisateur)
+            lien = f"{base_url}/reinitialiser-mot-de-passe?uid={uid}&jeton={jeton}"
+            heures_validite = settings.PASSWORD_RESET_TIMEOUT // 3600
+            notifier_email(
+                destinataire=utilisateur.email,
+                sujet="Réinitialisation de votre mot de passe — DGAP",
+                contenu=(
+                    f"Bonjour {utilisateur.prenom},\n\n"
+                    "Une demande de réinitialisation de mot de passe a été faite pour ce "
+                    "compte. Si vous en êtes à l'origine, cliquez sur le lien ci-dessous "
+                    f"(valable {heures_validite} heures) :\n\n{lien}\n\n"
+                    "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : "
+                    "votre mot de passe actuel reste valide."
+                ),
+                objet_source=utilisateur,
+            )
+
+        return Response(
+            {
+                "detail": (
+                    "Si cette adresse correspond à un compte, un e-mail de "
+                    "réinitialisation a été envoyé."
+                )
+            }
+        )
+
+
+class ConfirmationReinitialisationMotDePasseView(APIView):
+    """POST /api/v1/auth/mot-de-passe-oublie/confirmation — définit un nouveau mot de
+    passe à partir du lien reçu par e-mail."""
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(request=ReinitialisationMotDePasseSerializer, responses=None)
+    def post(self, request):
+        serializer = ReinitialisationMotDePasseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        utilisateur = None
+        try:
+            pk = urlsafe_base64_decode(serializer.validated_data["uid"]).decode()
+            utilisateur = Utilisateur.objects.get(pk=pk, is_active=True)
+        except (TypeError, ValueError, OverflowError, Utilisateur.DoesNotExist):
+            pass
+
+        jeton_valide = utilisateur is not None and _generateur_jeton_reinitialisation.check_token(
+            utilisateur, serializer.validated_data["jeton"]
+        )
+        if not jeton_valide:
+            return Response(
+                {"detail": "Ce lien de réinitialisation est invalide ou a expiré."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        assert utilisateur is not None  # garanti par jeton_valide ci-dessus
+
+        nouveau_mot_de_passe = serializer.validated_data["nouveau_mot_de_passe"]
+        try:
+            validate_password(nouveau_mot_de_passe, user=utilisateur)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({"nouveau_mot_de_passe": exc.messages}) from exc
+
+        utilisateur.set_password(nouveau_mot_de_passe)
+        utilisateur.save(update_fields=["password"])
+
+        JournalAction.tracer(
+            acteur=utilisateur,
+            action=Action.MODIFIER,
+            ressource_type="mot_de_passe",
+            ressource_id=str(utilisateur.id),
+            requete=request,
+        )
+        return Response({"detail": "Mot de passe réinitialisé avec succès."})
 
 
 class PaginationUtilisateurs(PaginationParCurseur):

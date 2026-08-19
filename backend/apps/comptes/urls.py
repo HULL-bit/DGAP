@@ -7,7 +7,9 @@ from .views import (
     AttributionPermissionCreationView,
     AttributionPermissionRevocationView,
     ConfirmationMFAView,
+    ConfirmationReinitialisationMotDePasseView,
     ConnexionView,
+    DemandeReinitialisationMotDePasseView,
     InscriptionMFAView,
     MoiView,
     PerimetreListView,
@@ -26,6 +28,16 @@ urlpatterns = [
     path("auth/moi", MoiView.as_view(), name="moi"),
     path("auth/mfa/inscription", InscriptionMFAView.as_view(), name="mfa-inscription"),
     path("auth/mfa/confirmation", ConfirmationMFAView.as_view(), name="mfa-confirmation"),
+    path(
+        "auth/mot-de-passe-oublie",
+        DemandeReinitialisationMotDePasseView.as_view(),
+        name="mot-de-passe-oublie",
+    ),
+    path(
+        "auth/mot-de-passe-oublie/confirmation",
+        ConfirmationReinitialisationMotDePasseView.as_view(),
+        name="mot-de-passe-oublie-confirmation",
+    ),
     path("perimetres", PerimetreListView.as_view(), name="perimetres"),
     path(
         "backoffice/comptes/utilisateurs",

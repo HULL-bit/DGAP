@@ -9,6 +9,16 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import AffectationRole, AttributionPermission, Perimetre, Permission, Role, Utilisateur
 
 
+class DemandeReinitialisationMotDePasseSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class ReinitialisationMotDePasseSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    jeton = serializers.CharField()
+    nouveau_mot_de_passe = serializers.CharField(write_only=True)
+
+
 class PerimetreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Perimetre
