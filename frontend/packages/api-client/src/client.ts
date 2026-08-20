@@ -33,7 +33,36 @@ function baseUrl(): string {
 
 let rafraichissementEnCours: Promise<boolean> | null = null
 
-/** Échange le refresh token contre un nouvel access token. Un seul appel concurrent à la fois. */
+async function tenterRafraichissement(refresh: string): Promise<'ok' | 'jeton-perime' | 'echec'> {
+  try {
+    const reponse = await fetch(`${baseUrl()}/auth/rafraichissement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh }),
+    })
+    if (!reponse.ok) return 'jeton-perime'
+    // `ROTATE_REFRESH_TOKENS=True` côté backend (SIMPLE_JWT) : chaque
+    // rafraîchissement invalide l'ancien refresh token et en émet un nouveau.
+    // Ne pas le persister ici ferait échouer le rafraîchissement suivant (token
+    // devenu invalide) et déconnecterait l'agent bien avant les 24h prévues.
+    const donnees = (await reponse.json()) as { access: string; refresh?: string }
+    definirJetons({ access: donnees.access, refresh: donnees.refresh })
+    return 'ok'
+  } catch {
+    return 'echec'
+  }
+}
+
+/**
+ * Échange le refresh token contre un nouvel access token. Un seul appel concurrent
+ * à la fois par onglet (`rafraichissementEnCours`) — mais le refresh token vit dans
+ * `localStorage`, partagé entre tous les onglets d'un même agent. Si un AUTRE onglet
+ * a rafraîchi entre-temps, celui-ci invalide l'ancien jeton (rotation ci-dessus) :
+ * sans la revérification ci-dessous, ce second onglet prendrait ce rejet pour une
+ * session morte et redemanderait mot de passe + code TOTP alors que la session est
+ * toujours valide ailleurs — on retente donc une fois avec le jeton réellement en
+ * stockage avant d'abandonner.
+ */
 async function rafraichirSession(): Promise<boolean> {
   const refresh = obtenirJetonRafraichissement()
   if (!refresh) return false
@@ -41,25 +70,17 @@ async function rafraichirSession(): Promise<boolean> {
   if (!rafraichissementEnCours) {
     rafraichissementEnCours = (async () => {
       try {
-        const reponse = await fetch(`${baseUrl()}/auth/rafraichissement`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh }),
-        })
-        if (!reponse.ok) {
-          effacerJetons()
-          return false
+        let resultat = await tenterRafraichissement(refresh)
+        if (resultat === 'jeton-perime') {
+          const refreshActuel = obtenirJetonRafraichissement()
+          if (refreshActuel && refreshActuel !== refresh) {
+            resultat = await tenterRafraichissement(refreshActuel)
+          }
         }
-        // `ROTATE_REFRESH_TOKENS=True` côté backend (SIMPLE_JWT) : chaque
-        // rafraîchissement invalide l'ancien refresh token et en émet un nouveau.
-        // Ne pas le persister ici ferait échouer le rafraîchissement suivant (token
-        // devenu invalide) et déconnecterait l'agent bien avant les 24h prévues.
-        const donnees = (await reponse.json()) as { access: string; refresh?: string }
-        definirJetons({ access: donnees.access, refresh: donnees.refresh })
-        return true
-      } catch {
-        effacerJetons()
-        return false
+        if (resultat !== 'ok') {
+          effacerJetons()
+        }
+        return resultat === 'ok'
       } finally {
         rafraichissementEnCours = null
       }
