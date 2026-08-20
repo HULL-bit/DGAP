@@ -40,7 +40,9 @@ export function ConfigurerMFA() {
       })
       await rafraichirProfil()
     } catch {
-      setErreur('Code invalide. Vérifiez votre application et réessayez.')
+      setErreur(
+        "Code invalide, ou déjà utilisé (un code ne sert qu'une fois). Attendez qu'un nouveau code s'affiche dans votre application avant de réessayer.",
+      )
     } finally {
       setEnCours(false)
     }
@@ -90,6 +92,7 @@ export function ConfigurerMFA() {
             required
             value={code}
             onChange={(e) => setCode(e.target.value)}
+            aide="Saisissez le code affiché à l'instant dans votre application."
           />
           {erreur && (
             <p role="alert" className="font-corps text-sm text-error">

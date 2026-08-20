@@ -35,9 +35,15 @@ Le MFA (TOTP) est **obligatoire** mais suit un parcours de *bootstrap* en deux t
      Authenticator, Authy, Microsoft Authenticator, ou l'app native « Mots de passe »
      sur iPhone/iOS 15+ via « Configurer le code de vérification »).
    - Entrer le code à 6 chiffres affiché, cliquer « Activer ».
-   - ⚠️ Ne pas recharger cette page avant de valider : chaque chargement régénère un
-     nouveau secret tant que rien n'est confirmé.
+   - Recharger cette page avant de valider ne pose pas de problème : l'inscription
+     est idempotente tant qu'elle n'est pas confirmée (`InscriptionMFAView`), le même
+     secret est réutilisé plutôt que régénéré.
 3. **Connexions suivantes** : email + mot de passe + code TOTP courant, à chaque fois.
+   « Le code ne marche pas » vient presque toujours d'un code réutilisé (refusé par
+   sécurité, un code ne sert qu'une fois) ou d'échecs rapprochés qui déclenchent une
+   pause croissante (`django_otp` : 1 s, 2 s, 4 s...) — voir
+   [`guide-mfa-agents.md`](guide-mfa-agents.md) pour l'explication complète destinée
+   aux agents.
 
 ### Réinitialiser le MFA d'un compte de démo (si besoin, en dev uniquement)
 

@@ -79,7 +79,7 @@ export function Connexion() {
               autoComplete="one-time-code"
               value={codeTotp}
               onChange={(e) => setCodeTotp(e.target.value)}
-              aide="Ouvrez votre application d'authentification (TOTP)."
+              aide="Un code déjà utilisé est refusé même s'il est encore affiché : attendez qu'un nouveau code apparaisse dans votre application avant de réessayer."
             />
           )}
 
