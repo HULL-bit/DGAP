@@ -323,6 +323,33 @@ class UtilisateurAdminDetailView(RetrieveUpdateAPIView):
         )
 
 
+class ReinitialisationMFAView(APIView):
+    """POST /api/v1/backoffice/comptes/utilisateurs/{id}/reinitialiser-mfa —
+    supprime le(s) dispositif(s) TOTP du compte et désactive le MFA (perte de
+    téléphone, changement d'appareil). Le compte repasse par le parcours de
+    bootstrap (§6.3) à sa prochaine connexion : mot de passe seul, puis nouvelle
+    inscription MFA obligatoire avant tout accès métier."""
+
+    permission_classes = [MFAConfirmee, PeutGererComptes]
+
+    @extend_schema(request=None, responses=None)
+    def post(self, request, pk):
+        utilisateur = get_object_or_404(Utilisateur, pk=pk)
+        TOTPDevice.objects.filter(user=utilisateur).delete()
+        utilisateur.mfa_active = False
+        utilisateur.save(update_fields=["mfa_active"])
+
+        JournalAction.tracer(
+            acteur=request.user,
+            action=Action.MODIFIER,
+            ressource_type="mfa",
+            ressource_id=str(utilisateur.id),
+            requete=request,
+            detail={"reinitialise_par_admin": True},
+        )
+        return Response({"mfa_active": False})
+
+
 class RoleListCreateView(ListCreateAPIView):
     """GET/POST /api/v1/backoffice/comptes/roles (EF-1501)."""
 

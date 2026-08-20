@@ -79,6 +79,26 @@ export function CompteDetail() {
     }
   }
 
+  async function reinitialiserMfa() {
+    if (
+      !window.confirm(
+        `Réinitialiser le MFA de ${compte?.prenom} ${compte?.nom} ? La personne devra scanner un nouveau QR code à sa prochaine connexion.`,
+      )
+    ) {
+      return
+    }
+    setErreur(null)
+    setEnCours(true)
+    try {
+      await requeteApi(`/backoffice/comptes/utilisateurs/${id}/reinitialiser-mfa`, { method: 'POST' })
+      await invalider()
+    } catch (err) {
+      setErreur(err instanceof ApiError ? (err.probleme.detail ?? 'Action impossible.') : 'Action impossible.')
+    } finally {
+      setEnCours(false)
+    }
+  }
+
   async function creerAffectation(e: FormEvent) {
     e.preventDefault()
     setErreur(null)
@@ -174,6 +194,11 @@ export function CompteDetail() {
         <div className="flex items-center gap-2">
           {!compte.is_active && <Badge ton="erreur" libelle="Désactivé" />}
           {compte.est_superviseur_national && <Badge ton="attente" libelle="Superviseur national" />}
+          {compte.est_agent_interne && compte.mfa_active && (
+            <Bouton taille="sm" onClick={reinitialiserMfa} disabled={enCours}>
+              Réinitialiser le MFA
+            </Bouton>
+          )}
           <Bouton taille="sm" onClick={basculerActif} disabled={enCours}>
             {compte.is_active ? 'Désactiver' : 'Réactiver'}
           </Bouton>
@@ -184,6 +209,11 @@ export function CompteDetail() {
         Un compte n'est jamais supprimé physiquement (référencé par l'historique dans tout le
         système) — la désactivation en tient lieu.
       </p>
+      {compte.est_agent_interne && !compte.mfa_active && (
+        <p className="mt-1 font-corps text-xs text-text-muted dark:text-text-inv-muted">
+          MFA non activé — la personne passera par l'écran d'inscription à sa prochaine connexion.
+        </p>
+      )}
 
       {erreur && (
         <p role="alert" className="mt-4 font-corps text-sm text-error">

@@ -1,4 +1,5 @@
 import pytest
+from django_otp.plugins.otp_totp.models import TOTPDevice
 from rest_framework.test import APIClient
 
 from apps.comptes.models import AffectationRole, Perimetre, Permission, Role, Utilisateur
@@ -144,3 +145,27 @@ def test_liste_permissions_est_en_lecture_seule():
     reponse = client.get("/api/v1/backoffice/comptes/permissions")
     assert reponse.status_code == 200
     assert len(reponse.data) >= 1
+
+
+def test_reinitialisation_mfa_supprime_le_dispositif_totp_et_desactive_le_mfa():
+    gestionnaire = _agent_avec_scopes("gestionnaire-mfa@example.sn", "comptes:gerer")
+    cible = _agent_avec_scopes("cible-mfa@example.sn")
+    TOTPDevice.objects.create(user=cible, name="dispositif-principal", confirmed=True)
+
+    client = APIClient()
+    client.force_authenticate(gestionnaire)
+    reponse = client.post(f"/api/v1/backoffice/comptes/utilisateurs/{cible.pk}/reinitialiser-mfa")
+
+    assert reponse.status_code == 200
+    assert reponse.data["mfa_active"] is False
+    cible.refresh_from_db()
+    assert cible.mfa_active is False
+    assert not TOTPDevice.objects.filter(user=cible).exists()
+
+
+def test_reinitialisation_mfa_refusee_sans_scope_comptes_gerer():
+    cible = _agent_avec_scopes("cible-mfa-refus@example.sn")
+    client = APIClient()
+    client.force_authenticate(_agent_avec_scopes("sans-scope-mfa@example.sn"))
+    reponse = client.post(f"/api/v1/backoffice/comptes/utilisateurs/{cible.pk}/reinitialiser-mfa")
+    assert reponse.status_code == 403
